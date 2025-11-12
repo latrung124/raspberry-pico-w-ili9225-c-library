@@ -183,9 +183,14 @@
 #define ILI9225_OTP_KEY                 0x63u  // Write AA55 for key
 /** OTP Registers: Used for programming ID or other NV memory. */
 
-// Bit Masks Examples (for common registers)
 // For Entry Mode (R03h)
 #define ILI9225_ENTRY_MODE_AM_VERTICAL  (1 << 3)  // AM=1 for vertical addressing
+#define ILI9225_ENTRY_MODE_AM_HORIZONTAL (0 << 3) // AM=0 for horizontal addressing
 
+// Entry Mode (R03h) ID bits, AM bit combined
+#define ILI9225_ENTRY_MODE_PORTRAIT 0x0018 //00011000
+#define ILI9225_ENTRY_MODE_LANDSCAPE 0x0030 //00110000
+#define ILI9225_ENTRY_MODE_PORTRAIT_REV 0x0028 //00101000
+#define ILI9225_ENTRY_MODE_LANDSCAPE_REV 0x0000 //00000000
 
 #endif // ILI9225_DEFS_H

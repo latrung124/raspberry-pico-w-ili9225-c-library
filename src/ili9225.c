@@ -145,7 +145,25 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
 }
 
 void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation) {
-    // TODO: Implement rotation setting for ILI9225
+    config->rotation = rotation;
+    ili9225_write_command(config, ILI9225_ENTRY_MODE);
+    switch (rotation) {
+        case ILI9225_PORTRAIT:
+            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT);
+            break;
+        case ILI9225_LANDSCAPE:
+            ili9225_write_data16(config, ILI9225_ENTRY_MODE_LANDSCAPE);
+            break;
+        case ILI9225_PORTRAIT_REV:
+            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT_REV);
+            break;
+        case ILI9225_LANDSCAPE_REV:
+            ili9225_write_data16(config, ILI9225_ENTRY_MODE_LANDSCAPE_REV);
+            break;
+        default:
+            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT);
+            break;
+    }
 }
 
 void ili9225_fill_screen(ili9225_config_t* config, uint16_t color) {
