@@ -12,10 +12,10 @@
 
 // Screen Rotation
 typedef enum {
-    ROTATION_0,
-    ROTATION_90,
-    ROTATION_180,
-    ROTATION_270
+    ILI9225_PORTRAIT = 0,
+    ILI9225_LANDSCAPE = 1,
+    ILI9225_PORTRAIT_REV = 2,
+    ILI9225_LANDSCAPE_REV = 3
 } ili9225_rotation_t;
 
 #endif // UTILITIES_UTILS_H
