@@ -15,6 +15,18 @@
 #ifndef ILI9225_DEFS_H
 #define ILI9225_DEFS_H
 
+// Value drive a single GPIO to high for command
+#define ILI9225_CMD_GPIO 0
+
+// Value drive a single GPIO to low for data
+#define ILI9225_DATA_GPIO 1
+
+// Its value used to set the Chip Select (CS) pin to HIGH
+#define ILI9225_CS_HIGH 1 // tell the ili9225 to stop listening, release the bus for other devices
+
+// Its value used to set the Chip Select (CS) pin to LOW
+#define ILI9225_CS_LOW 0 // tell the ili9225 to start listening
+
 #define ILI9225_LCD_WIDTH  176u
 #define ILI9225_LCD_HEIGHT 220u
 

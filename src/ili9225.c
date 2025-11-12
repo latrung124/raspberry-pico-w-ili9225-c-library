@@ -8,7 +8,23 @@
  */
 
 #include "ili9225.h"
+#include "hardware/gpio.h"
 #include "terminal6x8.h"
+
+static void ili9225_write_command(ili9225_config_t* config, uint8_t cmd) {
+    gpio_put(config->pin_dc, ILI9225_CMD_GPIO);
+    gpio_put(config->pin_cs, ILI9225_CS_LOW);
+    spi_write_blocking(config->spi, &cmd, 1);
+    gpio_put(config->pin_cs, ILI9225_CS_HIGH);
+}
+
+static void ili9225_write_data16(ili9225_config_t* config, uint16_t data) {
+    gpio_put(config->pin_dc, ILI9225_DATA_GPIO);
+    uint8_t buf[2] = {data >> 8, data & 0xFF};
+    gpio_put(config->pin_cs, ILI9225_CS_LOW);
+    spi_write_blocking(config->spi, buf, 2);
+    gpio_put(config->pin_cs, ILI9225_CS_HIGH);
+}
 
 void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint pin_mosi, uint pin_miso,
                   uint pin_cs, uint pin_dc, uint pin_reset,

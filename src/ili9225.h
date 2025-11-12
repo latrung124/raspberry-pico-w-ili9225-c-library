@@ -19,7 +19,7 @@
 
 // Structure to hold ILI9225 configuration
 typedef struct {
-    spi_inst_t* spi_inst; // SPI instance (e.g., spi0 or spi1)
+    spi_inst_t* spi; // SPI instance (e.g., spi0 or spi1)
     uint pin_sck;   // SPI clock pin
     uint pin_mosi;  // SPI MOSI pin
     uint pin_miso; // SPI MISO pin (if used)
