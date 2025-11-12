@@ -8,6 +8,9 @@
  */
 
 #include "ili9225.h"
+
+#include <stdlib.h>
+
 #include "hardware/gpio.h"
 #include "terminal6x8.h"
 
@@ -24,6 +27,22 @@ static void ili9225_write_data16(ili9225_config_t* config, uint16_t data) {
     gpio_put(config->pin_cs, ILI9225_CS_LOW);
     spi_write_blocking(config->spi, buf, 2);
     gpio_put(config->pin_cs, ILI9225_CS_HIGH);
+}
+
+static void ili9225_set_window(ili9225_config_t *config, uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+    ili9225_write_command(config, ILI9225_HORIZONTAL_WINDOW_ADDR1);
+    ili9225_write_data16(config, x2);
+    ili9225_write_command(config, ILI9225_HORIZONTAL_WINDOW_ADDR2);
+    ili9225_write_data16(config, x1);
+    ili9225_write_command(config, ILI9225_VERTICAL_WINDOW_ADDR1);
+    ili9225_write_data16(config, y2);
+    ili9225_write_command(config, ILI9225_VERTICAL_WINDOW_ADDR2);
+    ili9225_write_data16(config, y1);
+    ili9225_write_command(config, ILI9225_RAM_ADDR_SET1);
+    ili9225_write_data16(config, x1);
+    ili9225_write_command(config, ILI9225_RAM_ADDR_SET2);
+    ili9225_write_data16(config, y1);
+    ili9225_write_command(config, ILI9225_GRAM_DATA_REG);
 }
 
 void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint pin_mosi, uint pin_miso,
@@ -171,15 +190,53 @@ void ili9225_fill_screen(ili9225_config_t* config, uint16_t color) {
 }
 
 void ili9225_draw_pixel(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t color) {
-    // TODO: Implement draw pixel function for ILI9225
+    ili9225_set_window(config, x, y, x, y);
+    ili9225_write_data16(config, color);
 }
 
 void ili9225_draw_line(ili9225_config_t* config, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color) {
-    // TODO: Implement draw line function for ILI9225
+    uint16_t steep = abs(y1 - y0) > abs(x1 - x0);
+    if (steep) {
+        uint16_t temp = x0;
+        x0 = y0;
+        y0 = temp;
+        temp = x1;
+        x1 = y1;
+        y1 = temp;
+    }
+
+    if (x0 > x1) {
+        uint16_t temp = x0;
+        x0 = x1;
+        x1 = temp;
+        temp = y0;
+        y0 = y1;
+        y1 = temp;
+    }
+
+    uint16_t dx = x1 - x0;
+    uint16_t dy = abs(y1 - y0);
+    uint16_t err = dx / 2;
+    int16_t ystep = (y0 < y1) ? 1 : -1;
+    for (; x0 <= x1; x0++) {
+        if (steep) {
+            ili9225_draw_pixel(config, y0, x0, color);
+        } else {
+            ili9225_draw_pixel(config, x0, y0, color);
+        }
+        err -= dy;
+        if (err < 0) {
+            y0 += ystep;
+            err += dx;
+        }
+    }
 }
 
 void ili9225_draw_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
-    // TODO: Implement draw rectangle function for ILI9225
+    ili9225_draw_line(config, x, y, x + w, y, color);
+    ili9225_draw_line(config, x, y, x, y + h, color);
+    ili9225_draw_line(config, x + w, y, x + w, y + h, color);
+    ili9225_draw_line(config, x, y + h, x + w, y + h, color);
 }
 
 void ili9225_fill_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
