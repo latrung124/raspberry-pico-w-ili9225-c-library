@@ -1,1 +1,46 @@
-build/*
+# Build directories (CMake)
+build/
+*/build/
+
+# Simulator build artifacts
+simulator/*.o
+simulator/test_real_ili9225
+simulator/log.o
+simulator/ili9225_mock.o
+
+# Compile commands for IDEs
+compile_commands.json
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+.eggs/
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.old

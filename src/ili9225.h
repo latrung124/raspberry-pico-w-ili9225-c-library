@@ -12,8 +12,11 @@
 
 #include <stdint.h>
 
+#ifndef SIMULATOR_BUILD
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
+#endif
+
 #include "ili9225_defs.h"
 #include "utilities/utils.h"
 

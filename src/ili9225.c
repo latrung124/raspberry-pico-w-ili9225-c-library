@@ -11,7 +11,9 @@
 
 #include <stdlib.h>
 
+#ifndef SIMULATOR_BUILD
 #include "hardware/gpio.h"
+#endif
 #include "terminal6x8.h"
 #include "log.h"
 

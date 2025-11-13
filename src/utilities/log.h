@@ -2,16 +2,18 @@
  * @file log.h
  * @author trung.la
  * @date November 13 2025
- * @brief Logging module for debugging
+ * @brief Logging interface for Raspberry Pi Pico
  * 
  * Copyright (c) 2025 trung.la
  */
 
-#ifndef UTILITIES_LOG_H
-#define UTILITIES_LOG_H
+#ifndef LOG_H
+#define LOG_H
 
 #include <stdio.h>
+#ifndef SIMULATOR_BUILD
 #include "pico/stdlib.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
