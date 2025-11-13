@@ -1,4 +1,4 @@
-# ILI9225 Web Simulator# ILI9225 Web Simulator# ILI9225 LCD Simulator
+# ILI9225 Web Simulator# ILI9225 Web Simulator# ILI9225 Web Simulator# ILI9225 LCD Simulator
 
 
 
@@ -6,243 +6,489 @@ Test your `ili9225.c` drawing functions in a web browser without physical hardwa
 
 
 
-## PurposeTest your `ili9225.c` drawing functions in a web browser without physical hardware!A Python-based simulator for the ILI9225 176x220 LCD display. Test your drawing code without physical hardware!
+## Quick Start GuideTest your `ili9225.c` drawing functions in a web browser without physical hardware!
 
 
 
-This simulator allows you to test the **real** `ili9225.c` implementation by:
-
-- Mocking the Raspberry Pi Pico hardware layer (SPI, GPIO)
-
-- Capturing drawing operations at the hardware level## Purpose## Features
-
-- Visualizing results in a web browser
-
-- Testing all drawing primitives: pixels, lines, rectangles, circles, text
+### Step 1: Start the Web Simulator
 
 
 
-**No SPI simulation** - we capture the drawing intent and render directly to the display.This simulator allows you to test the **real** `ili9225.c` implementation by:- ✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments
+Open a terminal and run:## PurposeTest your `ili9225.c` drawing functions in a web browser without physical hardware!A Python-based simulator for the ILI9225 176x220 LCD display. Test your drawing code without physical hardware!
 
 
-
-## Features- Mocking the Raspberry Pi Pico hardware layer (SPI, GPIO)- ✅ **Desktop Display**: Optional Pygame version for local development
-
-
-
-✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments  - Capturing drawing operations at the hardware level- ✅ **Visual Display**: 176x220 pixel simulation window
-
-✅ **Real Code Testing**: Tests your actual `ili9225.c` implementation  
-
-✅ **Visual Display**: 176x220 pixel simulation with 3x zoom  - Visualizing results in a web browser- ✅ **Scalable**: Adjust zoom level (default 3x)
-
-✅ **RGB565 Support**: Accurate color conversion  
-
-✅ **CMake Build System**: Consistent with main project  - Testing all drawing primitives: pixels, lines, rectangles, circles, text- ✅ **Network Mode**: Receive drawing commands over TCP/WebSocket
-
-✅ **All Drawing Functions**:
-
-  - `ili9225_draw_pixel()`, `ili9225_draw_line()`- ✅ **Demo Mode**: Built-in demonstration
-
-  - `ili9225_draw_rect()`, `ili9225_fill_rect()`
-
-  - `ili9225_draw_circle()`, `ili9225_fill_circle()`**No SPI simulation** - we capture the drawing intent and render directly to the display.- ✅ **RGB565 Support**: Accurate color conversion
-
-  - `ili9225_draw_text()`, `ili9225_draw_char()`
-
-- ✅ **Screenshot**: Save current display state
-
-## Installation
-
-## Features- ✅ **All Drawing Primitives**:
 
 ```bash
 
-cd simulator  - Pixels
+cd simulator
 
-pip install -r requirements-web.txt
+./run_web.shThis simulator allows you to test the **real** `ili9225.c` implementation by:
 
-```✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments    - Lines
+```
 
+- Mocking the Raspberry Pi Pico hardware layer (SPI, GPIO)
 
+This starts a Flask server at `http://localhost:5000`. **Open this URL in your browser!**
 
-## Quick Start✅ **Real Code Testing**: Tests your actual `ili9225.c` implementation    - Rectangles (outline and filled)
+- Capturing drawing operations at the hardware level## Purpose## Features
 
+### Step 2: Build and Run Tests
 
+- Visualizing results in a web browser
 
-### 1. Start Web Simulator✅ **Visual Display**: 176x220 pixel simulation with 3x zoom    - Circles (outline and filled)
+Open **another terminal** and run:
 
+- Testing all drawing primitives: pixels, lines, rectangles, circles, text
 
+```bash
 
-```bash✅ **RGB565 Support**: Accurate color conversion    - Text rendering
-
-./run_web.sh
-
-```✅ **All Drawing Functions**:
-
-
-
-This starts a Flask server at `http://localhost:5000`. Open the URL in your browser.  - `ili9225_draw_pixel()`, `ili9225_draw_line()`## Installation
+cd simulator
 
 
 
-### 2. Build and Run Test Program  - `ili9225_draw_rect()`, `ili9225_fill_rect()`
+# Using CMake (recommended)**No SPI simulation** - we capture the drawing intent and render directly to the display.This simulator allows you to test the **real** `ili9225.c` implementation by:- ✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments
 
-
-
-In another terminal:  - `ili9225_draw_circle()`, `ili9225_fill_circle()`### Web Version (Recommended for GitHub Codespaces)
-
-
-
-```bash  - `ili9225_draw_text()`, `ili9225_draw_char()`
-
-# Configure and build
-
-cmake -B build```bash
+cmake -B build
 
 cmake --build build
 
-## Installationcd simulator
+./build/test_real_ili9225
 
-# Run the test
+```## Features- Mocking the Raspberry Pi Pico hardware layer (SPI, GPIO)- ✅ **Desktop Display**: Optional Pygame version for local development
 
-./build/test_real_ili9225pip install -r requirements-web.txt
+
+
+**Alternative using Make:**
+
+```bash
+
+cd simulator✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments  - Capturing drawing operations at the hardware level- ✅ **Visual Display**: 176x220 pixel simulation window
+
+make
+
+./test_real_ili9225✅ **Real Code Testing**: Tests your actual `ili9225.c` implementation  
+
+```
+
+✅ **Visual Display**: 176x220 pixel simulation with 3x zoom  - Visualizing results in a web browser- ✅ **Scalable**: Adjust zoom level (default 3x)
+
+### Step 3: Watch the Magic! ✨
+
+✅ **RGB565 Support**: Accurate color conversion  
+
+Go to your browser (`http://localhost:5000`) and watch your **real** `ili9225.c` functions draw:
+
+- Pixels✅ **CMake Build System**: Consistent with main project  - Testing all drawing primitives: pixels, lines, rectangles, circles, text- ✅ **Network Mode**: Receive drawing commands over TCP/WebSocket
+
+- Lines
+
+- Rectangles✅ **All Drawing Functions**:
+
+- Circles
+
+- Text  - `ili9225_draw_pixel()`, `ili9225_draw_line()`- ✅ **Demo Mode**: Built-in demonstration
+
+
+
+## What This Tests  - `ili9225_draw_rect()`, `ili9225_fill_rect()`
+
+
+
+This simulator tests your **actual production code** from `../src/ili9225.c`:  - `ili9225_draw_circle()`, `ili9225_fill_circle()`**No SPI simulation** - we capture the drawing intent and render directly to the display.- ✅ **RGB565 Support**: Accurate color conversion
+
+
+
+✅ `ili9225_init()` - Initialization    - `ili9225_draw_text()`, `ili9225_draw_char()`
+
+✅ `ili9225_fill_screen()` - Screen clearing  
+
+✅ `ili9225_draw_pixel()` - Pixel drawing  - ✅ **Screenshot**: Save current display state
+
+✅ `ili9225_draw_line()` - Line drawing  
+
+✅ `ili9225_draw_rect()` - Rectangle outline  ## Installation
+
+✅ `ili9225_fill_rect()` - Filled rectangle  
+
+✅ `ili9225_draw_circle()` - Circle outline  ## Features- ✅ **All Drawing Primitives**:
+
+✅ `ili9225_fill_circle()` - Filled circle  
+
+✅ `ili9225_draw_text()` - Text rendering  ```bash
+
+✅ `ili9225_draw_char()` - Character drawing  
+
+cd simulator  - Pixels
+
+## Installation
+
+pip install -r requirements-web.txt
+
+```bash
+
+cd simulator```✅ **Web-Based Display**: Works in GitHub Codespaces and remote environments    - Lines
+
+pip install -r requirements-web.txt
+
+```
+
+
+
+## How It Works## Quick Start✅ **Real Code Testing**: Tests your actual `ili9225.c` implementation    - Rectangles (outline and filled)
+
+
+
+```
+
+Your Test Program → Real ili9225.c → Mock Hardware → Framebuffer → Web Browser
+
+```### 1. Start Web Simulator✅ **Visual Display**: 176x220 pixel simulation with 3x zoom    - Circles (outline and filled)
+
+
+
+1. **Mock Layer** (`ili9225_mock.c`): Intercepts GPIO/SPI calls
+
+2. **Real Code**: Your actual `ili9225.c` executes normally
+
+3. **Framebuffer**: Captures pixel operations```bash✅ **RGB565 Support**: Accurate color conversion    - Text rendering
+
+4. **WebSocket**: Sends to web browser
+
+5. **Browser**: Displays the LCD screen./run_web.sh
+
+
+
+**No SPI simulation** - we capture drawing at the pixel level!```✅ **All Drawing Functions**:
+
+
+
+## Writing Your Own Tests
+
+
+
+Edit `test_real_ili9225.c`:This starts a Flask server at `http://localhost:5000`. Open the URL in your browser.  - `ili9225_draw_pixel()`, `ili9225_draw_line()`## Installation
+
+
+
+```c
+
+void my_custom_test(ili9225_config_t* lcd) {
+
+    // Clear screen to white### 2. Build and Run Test Program  - `ili9225_draw_rect()`, `ili9225_fill_rect()`
+
+    ili9225_fill_screen(lcd, 0xFFFF);
+
+    sim_mock_flush_framebuffer();  // Send to browser
+
+    sleep(1);
+
+    In another terminal:  - `ili9225_draw_circle()`, `ili9225_fill_circle()`### Web Version (Recommended for GitHub Codespaces)
+
+    // Draw a red circle
+
+    ili9225_draw_circle(lcd, 88, 110, 50, 0xF800);
+
+    sim_mock_flush_framebuffer();  // Update browser
+
+    sleep(1);```bash  - `ili9225_draw_text()`, `ili9225_draw_char()`
+
+    
+
+    // Add text# Configure and build
+
+    ili9225_draw_text(lcd, 10, 10, "Hello!", 0x0000, 2);
+
+    sim_mock_flush_framebuffer();  // Update browsercmake -B build```bash
+
+}
+
+cmake --build build
+
+// Add to main():
+
+int main(void) {## Installationcd simulator
+
+    // ... initialization code ...
+
+    # Run the test
+
+    my_custom_test(&lcd);  // Run your test
+
+    ./build/test_real_ili9225pip install -r requirements-web.txt
+
+    // ... cleanup ...
+
+}```
 
 ```
 
 ```bash```
 
+**Important:** Always call `sim_mock_flush_framebuffer()` to update the display!
+
 Watch your `ili9225.c` functions draw on the web display!
+
+## Rebuilding After Changes
 
 cd simulator
 
-## How It Works
+```bash
+
+# CMake## How It Works
+
+cmake --build build
 
 pip install -r requirements-web.txt### Desktop Version (Local development only)
+
+# Make
+
+make```
 
 ```
 
 ┌─────────────────┐```
 
+Then run `./build/test_real_ili9225` (or `./test_real_ili9225`) again.
+
 │  test_real_     │  Your test program
+
+## Web Interface Controls
 
 │  ili9225.c      │  calls real ili9225.c```bash
 
-└────────┬────────┘
+In the browser:
 
-         │## Quick Startcd simulator
+- **Clear** - Clear the display└────────┬────────┘
 
-         ├─────────────────┐
+- **Screenshot** - Save display as PNG
 
-         │                 │pip install -r requirements.txt
-
-┌────────▼────────┐  ┌────▼──────────┐
-
-│   ili9225.c     │  │ ili9225_mock  │### 1. Start Web Simulator```
-
-│ (real functions)│──▶│  Hardware     │
-
-│                 │  │  Mock Layer   │
-
-└─────────────────┘  └────┬──────────┘
-
-                          │```bash## Usage
-
-                          │ Captures drawing
-
-                          │ operations./run_web.sh
-
-                          │
-
-                     ┌────▼──────────┐```### Standalone Mode (Demo)
-
-                     │ Framebuffer   │
-
-                     └────┬──────────┘
-
-                          │
-
-                          │ WebSocketThis starts a Flask server at `http://localhost:5000`. Open the URL in your browser.Run the simulator with a built-in demo:
-
-                          │
-
-                     ┌────▼──────────┐
-
-                     │ Web Simulator │
-
-                     │  (Flask App)  │### 2. Run Test Program```bash
-
-                     └────┬──────────┘
-
-                          │python ili9225_simulator.py --demo
-
-                     ┌────▼──────────┐
-
-                     │   Browser     │In another terminal:```
-
-                     │   Display     │
-
-                     └───────────────┘
-
-```
-
-```bash### Network Mode
-
-### Mock Layer
-
-make test
-
-The mock layer (`ili9225_mock.c`) intercepts:
-
-- `gpio_put()` - Tracks DC/CS pin states```Start the simulator to receive commands over TCP:
-
-- `spi_write_blocking()` - Captures register writes and pixel data
-
-- `sleep_ms()` - Allows visualization timing
-
-
-
-It maintains a framebuffer and sends updates to the web simulator via WebSocket.Or manually:```bash
-
-
-
-## Web Interface Controlspython ili9225_simulator.py --network --port 9225
-
-
-
-- **Clear** - Clear the display```bash```
-
-- **Screenshot** - Save current display as PNG
-
-- **Test Pixels** - Run pixel drawing testmake
-
-- **Test Lines** - Run line drawing test
-
-- **Test Rectangles** - Run rectangle test./test_real_ili9225In another terminal, run the test client:
-
-- **Test Circles** - Run circle test
-
-- **Test Text** - Run text rendering test```
+- **Test Buttons** - Run specific test functions         │## Quick Startcd simulator
 
 - **Run All Tests** - Execute full test suite
 
+         ├─────────────────┐
+
+## Troubleshooting
+
+         │                 │pip install -r requirements.txt
+
+### "Connection refused" or test hangs
+
+┌────────▼────────┐  ┌────▼──────────┐
+
+Make sure the web simulator is running first (`./run_web.sh`).
+
+│   ili9225.c     │  │ ili9225_mock  │### 1. Start Web Simulator```
+
+### Port already in use
+
+│ (real functions)│──▶│  Hardware     │
+
 ```bash
 
-## Project Files
+pkill -f web_simulator.py│                 │  │  Mock Layer   │
 
-Watch your `ili9225.c` functions draw on the web display!python test_simulator.py
+./run_web.sh
+
+```└─────────────────┘  └────┬──────────┘
+
+
+
+### Display not updating                          │```bash## Usage
+
+
+
+Check that you call `sim_mock_flush_framebuffer()` after drawing operations.                          │ Captures drawing
+
+
+
+### Build errors                          │ operations./run_web.sh
+
+
+
+```bash                          │
+
+# Clean and rebuild
+
+rm -rf build                     ┌────▼──────────┐```### Standalone Mode (Demo)
+
+cmake -B build
+
+cmake --build build                     │ Framebuffer   │
 
 ```
 
-simulator/```
+                     └────┬──────────┘
 
-├── CMakeLists.txt            # CMake build configuration
+## Project Structure
+
+                          │
+
+```
+
+simulator/                          │ WebSocketThis starts a Flask server at `http://localhost:5000`. Open the URL in your browser.Run the simulator with a built-in demo:
+
+├── CMakeLists.txt           # CMake build (recommended)
+
+├── Makefile                 # Make build (legacy)                          │
+
+├── web_simulator.py         # Flask web server
+
+├── templates/index.html     # Web UI                     ┌────▼──────────┐
+
+├── ili9225_mock.c/h         # Hardware mocking layer
+
+├── test_real_ili9225.c      # Test program (EDIT THIS!)                     │ Web Simulator │
+
+├── run_web.sh               # Launcher script
+
+└── requirements-web.txt     # Python dependencies                     │  (Flask App)  │### 2. Run Test Program```bash
+
+```
+
+                     └────┬──────────┘
+
+## Why CMake?
+
+                          │python ili9225_simulator.py --demo
+
+CMake matches your main project build system for consistency:
+
+                     ┌────▼──────────┐
+
+```
+
+Main Project               Simulator                     │   Browser     │In another terminal:```
+
+├── CMakeLists.txt    →   ├── CMakeLists.txt
+
+├── src/ili9225.c     →   └── Tests real code!                     │   Display     │
+
+```
+
+                     └───────────────┘
+
+## RGB565 Colors
+
+```
+
+Use these color constants:
+
+```bash### Network Mode
+
+```c
+
+#define COLOR_BLACK   0x0000### Mock Layer
+
+#define COLOR_WHITE   0xFFFF
+
+#define COLOR_RED     0xF800make test
+
+#define COLOR_GREEN   0x07E0
+
+#define COLOR_BLUE    0x001FThe mock layer (`ili9225_mock.c`) intercepts:
+
+#define COLOR_YELLOW  0xFFE0
+
+#define COLOR_CYAN    0x07FF- `gpio_put()` - Tracks DC/CS pin states```Start the simulator to receive commands over TCP:
+
+#define COLOR_MAGENTA 0xF81F
+
+```- `spi_write_blocking()` - Captures register writes and pixel data
+
+
+
+Or create custom colors: `RGB565(r, g, b)` where r=0-31, g=0-63, b=0-31- `sleep_ms()` - Allows visualization timing
+
+
+
+## Advanced Usage
+
+
+
+### Running Specific TestsIt maintains a framebuffer and sends updates to the web simulator via WebSocket.Or manually:```bash
+
+
+
+Edit `main()` in `test_real_ili9225.c` to comment out tests:
+
+
+
+```c## Web Interface Controlspython ili9225_simulator.py --network --port 9225
+
+int main(void) {
+
+    // ... init ...
+
+    
+
+    // Run only what you want:- **Clear** - Clear the display```bash```
+
+    test_real_pixels(&lcd);
+
+    // test_real_lines(&lcd);      // Commented out- **Screenshot** - Save current display as PNG
+
+    // test_real_rectangles(&lcd);  // Commented out
+
+    test_real_circles(&lcd);- **Test Pixels** - Run pixel drawing testmake
+
+    
+
+    // ... cleanup ...- **Test Lines** - Run line drawing test
+
+}
+
+```- **Test Rectangles** - Run rectangle test./test_real_ili9225In another terminal, run the test client:
+
+
+
+### Custom Display Size- **Test Circles** - Run circle test
+
+
+
+In `test_real_ili9225.c`:- **Test Text** - Run text rendering test```
+
+
+
+```c- **Run All Tests** - Execute full test suite
+
+ili9225_init(&lcd, spi0,
+
+             2, 3, 4,```bash
+
+             5, 6, 7,
+
+             176, 220,  // Change width/height here## Project Files
+
+             ILI9225_PORTRAIT);
+
+```Watch your `ili9225.c` functions draw on the web display!python test_simulator.py
+
+
+
+### Different Rotation```
+
+
+
+```csimulator/```
+
+// In your test:
+
+ili9225_set_rotation(&lcd, ILI9225_LANDSCAPE);├── CMakeLists.txt            # CMake build configuration
+
+```
 
 ├── web_simulator.py          # Flask web server with WebSocket## How It Works
 
+Options: `ILI9225_PORTRAIT`, `ILI9225_LANDSCAPE`, `ILI9225_PORTRAIT_REV`, `ILI9225_LANDSCAPE_REV`
+
 ├── templates/
 
+## License
+
 │   └── index.html            # Web UI### Custom Scale
+
+Copyright (c) 2025 trung.la
 
 ├── ili9225_mock.c/h          # Hardware mock layer
 

@@ -148,9 +148,38 @@ class WebSimulator:
             self.draw_text(cmd["x"], cmd["y"], cmd["text"], cmd["color"], cmd.get("size", 1))
         elif cmd_type == "clear":
             self.clear(cmd.get("color", Color.BLACK))
+        elif cmd_type == "framebuffer":
+            self.update_from_framebuffer(cmd["pixels"], cmd.get("width", self.width), cmd.get("height", self.height))
         
         # Notify connected clients
         self.broadcast_update()
+
+    def update_from_framebuffer(self, encoded_pixels, width, height):
+        """Replace display content from a base64 encoded RGB565 framebuffer"""
+        try:
+            raw = base64.b64decode(encoded_pixels)
+        except Exception as exc:
+            print(f"Failed to decode framebuffer: {exc}")
+            return
+
+        expected_size = width * height * 2
+        if len(raw) != expected_size:
+            print(f"Invalid framebuffer size: expected {expected_size}, got {len(raw)}")
+            return
+
+        new_image = Image.new('RGB', (width, height))
+        pixels = new_image.load()
+
+        idx = 0
+        for y in range(height):
+            for x in range(width):
+                value = (raw[idx] << 8) | raw[idx + 1]
+                idx += 2
+                pixels[x, y] = Color.rgb565_to_rgb888(value)
+
+        self.image = new_image
+        self.draw = ImageDraw.Draw(self.image)
+        self.draw_count += 1
     
     def get_image_data(self):
         """Get image as base64 encoded PNG"""
@@ -230,6 +259,7 @@ def tcp_server_thread(port=9225):
     print(f"TCP server listening on port {port} for C code connections")
     
     clients = []
+    client_buffers = {}
     
     while True:
         # Accept new connections
@@ -241,28 +271,39 @@ def tcp_server_thread(port=9225):
                 client_socket, addr = server_socket.accept()
                 client_socket.setblocking(0)
                 clients.append(client_socket)
+                client_buffers[client_socket] = ""
                 print(f"C client connected from {addr}")
             else:
                 # Data from existing client
                 try:
-                    data = sock.recv(4096).decode('utf-8')
+                    data = sock.recv(4096)
                     if data:
-                        # Process each JSON command (may have multiple per message)
-                        for line in data.strip().split('\n'):
+                        try:
+                            text = data.decode('utf-8')
+                        except UnicodeDecodeError as exc:
+                            print(f"Invalid UTF-8 from client: {exc}")
+                            continue
+
+                        buffer = client_buffers.get(sock, "") + text
+                        while '\n' in buffer:
+                            line, buffer = buffer.split('\n', 1)
                             if line.strip():
                                 try:
                                     cmd = json.loads(line)
                                     simulator.handle_command(cmd)
                                 except json.JSONDecodeError as e:
                                     print(f"Invalid JSON: {line[:50]}... Error: {e}")
+                        client_buffers[sock] = buffer
                     else:
                         # Client disconnected
                         print("C client disconnected")
                         clients.remove(sock)
+                        client_buffers.pop(sock, None)
                         sock.close()
                 except (ConnectionResetError, BrokenPipeError):
                     print("C client disconnected (error)")
                     clients.remove(sock)
+                    client_buffers.pop(sock, None)
                     sock.close()
                 except Exception as e:
                     print(f"Error handling C client: {e}")

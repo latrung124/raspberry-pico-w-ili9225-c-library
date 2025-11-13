@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <errno.h>
 #include <time.h>
 
 // Mock SPI instances
@@ -84,6 +85,56 @@ static void send_sim_command(const char* json) {
     }
 }
 
+static bool send_all(int fd, const void* data, size_t len) {
+    const uint8_t* bytes = (const uint8_t*)data;
+    size_t total_sent = 0;
+
+    while (total_sent < len) {
+        ssize_t sent = send(fd, bytes + total_sent, len - total_sent, 0);
+        if (sent <= 0) {
+            return false;
+        }
+        total_sent += (size_t)sent;
+    }
+    return true;
+}
+
+static char* base64_encode(const uint8_t* data, size_t input_length, size_t* output_length) {
+    static const char encoding_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static const int mod_table[] = {0, 2, 1};
+
+    size_t encoded_len = 4 * ((input_length + 2) / 3);
+    char* encoded_data = malloc(encoded_len + 1);
+    if (!encoded_data) {
+        return NULL;
+    }
+
+    size_t input_index = 0;
+    size_t output_index = 0;
+    while (input_index < input_length) {
+        uint32_t octet_a = input_index < input_length ? data[input_index++] : 0;
+        uint32_t octet_b = input_index < input_length ? data[input_index++] : 0;
+        uint32_t octet_c = input_index < input_length ? data[input_index++] : 0;
+
+        uint32_t triple = (octet_a << 16) | (octet_b << 8) | octet_c;
+
+        encoded_data[output_index++] = encoding_table[(triple >> 18) & 0x3F];
+        encoded_data[output_index++] = encoding_table[(triple >> 12) & 0x3F];
+        encoded_data[output_index++] = encoding_table[(triple >> 6) & 0x3F];
+        encoded_data[output_index++] = encoding_table[triple & 0x3F];
+    }
+
+    for (int i = 0; i < mod_table[input_length % 3]; i++) {
+        encoded_data[encoded_len - 1 - i] = '=';
+    }
+
+    encoded_data[encoded_len] = '\0';
+    if (output_length) {
+        *output_length = encoded_len;
+    }
+    return encoded_data;
+}
+
 // Initialize framebuffer
 static void init_framebuffer(void) {
     if (!sim_state.framebuffer) {
@@ -103,19 +154,20 @@ void gpio_set_dir(uint pin, int dir) {
 
 void gpio_put(uint pin, int value) {
     // Track DC and CS pin states
-    static uint dc_pin = 0;
     static uint cs_pin = 0;
+    static uint dc_pin = 0;
     static bool pins_identified = false;
     
     if (!pins_identified) {
-        // Heuristic: DC and CS are typically different pins used frequently together
-        if (dc_pin == 0) dc_pin = pin;
-        else if (cs_pin == 0 && pin != dc_pin) {
+        // Heuristic: first frequent pin is CS (pull high), second distinct pin is DC
+        if (cs_pin == 0) {
             cs_pin = pin;
-            sim_state.pin_dc = dc_pin;
+        } else if (dc_pin == 0 && pin != cs_pin) {
+            dc_pin = pin;
             sim_state.pin_cs = cs_pin;
+            sim_state.pin_dc = dc_pin;
             pins_identified = true;
-            printf("[MOCK] Identified pins - DC:%d CS:%d\n", dc_pin, cs_pin);
+            printf("[MOCK] Identified pins - CS:%d DC:%d\n", cs_pin, dc_pin);
         }
     }
     
@@ -152,11 +204,15 @@ int spi_write_blocking(spi_inst_t* spi, const uint8_t* src, size_t len) {
         // Command byte
         last_command = src[0];
         command_data_idx = 0;
-        
-        if (last_command == ILI9225_GRAM_DATA_REG) {
-            sim_state.in_gram_write = true;
-            printf("[MOCK] Starting GRAM write at (%d,%d)\n", 
-                   sim_state.current_x, sim_state.current_y);
+        sim_state.in_gram_write = (last_command == ILI9225_GRAM_DATA_REG);
+
+        // Only log GRAM writes occasionally to avoid performance issues
+        if (sim_state.in_gram_write) {
+            static int gram_write_count = 0;
+            if (gram_write_count++ % 1000 == 0) {
+                printf("[MOCK] Starting GRAM write at (%d,%d)\n",
+                       sim_state.current_x, sim_state.current_y);
+            }
         }
     } else if (!sim_state.is_command && len == 2) {
         // Data word (16-bit)
@@ -272,28 +328,73 @@ void sim_mock_close(void) {
 }
 
 void sim_mock_flush_framebuffer(void) {
-    if (!sim_state.connected || !sim_state.fb_dirty) {
+    printf("[MOCK] flush called - connected:%d dirty:%d\n", sim_state.connected, sim_state.fb_dirty);
+    
+    if (!sim_state.connected) {
+        printf("[MOCK] Not connected, skipping flush\n");
+        return;
+    }
+    
+    if (!sim_state.fb_dirty) {
+        printf("[MOCK] Framebuffer not dirty, skipping flush\n");
         return;
     }
     
     init_framebuffer();
     
-    printf("[MOCK] Flushing framebuffer to simulator...\n");
-    
-    // Send each pixel that's been written
+    size_t raw_size = (size_t)sim_state.fb_width * (size_t)sim_state.fb_height * 2u;
+    uint8_t* raw_buffer = malloc(raw_size);
+    if (!raw_buffer) {
+        fprintf(stderr, "[MOCK] Failed to allocate raw framebuffer buffer\n");
+        return;
+    }
+
+    size_t raw_index = 0;
     for (uint16_t y = 0; y < sim_state.fb_height; y++) {
         for (uint16_t x = 0; x < sim_state.fb_width; x++) {
             uint16_t color = sim_state.framebuffer[y * sim_state.fb_width + x];
-            if (color != 0) {  // Only send non-black pixels (optimization)
-                char cmd[128];
-                snprintf(cmd, sizeof(cmd), 
-                        "{\"type\":\"pixel\",\"x\":%u,\"y\":%u,\"color\":%u}\n",
-                        x, y, color);
-                send_sim_command(cmd);
-            }
+            raw_buffer[raw_index++] = (uint8_t)(color >> 8);
+            raw_buffer[raw_index++] = (uint8_t)(color & 0xFF);
         }
     }
-    
+
+    size_t encoded_len = 0;
+    char* encoded = base64_encode(raw_buffer, raw_size, &encoded_len);
+    free(raw_buffer);
+
+    if (!encoded) {
+        fprintf(stderr, "[MOCK] Failed to encode framebuffer to base64\n");
+        return;
+    }
+
+    char header[256];
+    int header_len = snprintf(header, sizeof(header),
+                              "{\"type\":\"framebuffer\",\"width\":%u,\"height\":%u,\"pixels\":\"",
+                              sim_state.fb_width, sim_state.fb_height);
+    if (header_len < 0 || header_len >= (int)sizeof(header)) {
+        fprintf(stderr, "[MOCK] Failed to compose framebuffer header\n");
+        free(encoded);
+        return;
+    }
+
+    const char footer[] = "\"}\n";
+
+    printf("[MOCK] Flushing framebuffer to simulator (payload %zu bytes)\n", encoded_len);
+    bool ok = send_all(sim_state.socket_fd, header, (size_t)header_len);
+    if (ok) {
+        ok = send_all(sim_state.socket_fd, encoded, encoded_len);
+    }
+    if (ok) {
+        ok = send_all(sim_state.socket_fd, footer, sizeof(footer) - 1);
+    }
+
+    free(encoded);
+
+    if (!ok) {
+        fprintf(stderr, "[MOCK] Failed to transmit framebuffer to simulator\n");
+        return;
+    }
+
     sim_state.fb_dirty = false;
     printf("[MOCK] Framebuffer flush complete\n");
 }
