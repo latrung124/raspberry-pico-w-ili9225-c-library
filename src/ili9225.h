@@ -220,9 +220,10 @@ void ili9225_draw_char(ili9225_config_t* config, uint16_t x, uint16_t y,
  * @param bitmap Pointer to the bitmap data (array of 16-bit color values)
  * @param w Width of the bitmap
  * @param h Height of the bitmap
+ * @param color 16-bit color value to use for the bitmap pixels
  * @return void
  */
 void ili9225_draw_bitmap(ili9225_config_t* config, uint16_t x, uint16_t y,
-                 const uint8_t* bitmap, uint16_t w, uint16_t h);
+                 const uint8_t* bitmap, uint16_t w, uint16_t h, uint16_t color);
 
 #endif // ILI9225_H

@@ -32,6 +32,7 @@ pico_sdk_init()
 
 add_library(ili9225_pico STATIC
     src/ili9225.c
+    src/utilities/log.c
 )
 
 target_include_directories(ili9225_pico PUBLIC

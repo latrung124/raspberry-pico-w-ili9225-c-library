@@ -13,6 +13,10 @@
 
 #include "hardware/gpio.h"
 #include "terminal6x8.h"
+#include "log.h"
+
+// Uncomment to enable detailed logging
+// #define ILI9225_DEBUG_LOGGING
 
 static void ili9225_write_command(ili9225_config_t* config, uint8_t cmd) {
     gpio_put(config->pin_dc, ILI9225_CMD_GPIO);
@@ -48,7 +52,15 @@ static void ili9225_set_window(ili9225_config_t *config, uint16_t x1, uint16_t y
 void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint pin_mosi, uint pin_miso,
                   uint pin_cs, uint pin_dc, uint pin_reset,
                   uint16_t width, uint16_t height, ili9225_rotation_t rotation) {
-    if (!config) return;
+    if (!config) {
+        LOG_ERROR("Config is NULL");
+        return;
+    }
+    
+    LOG_INFO("Initializing ILI9225 LCD: %dx%d", width, height);
+    LOG_DEBUG("SPI pins - SCK:%d MOSI:%d MISO:%d", pin_sck, pin_mosi, pin_miso);
+    LOG_DEBUG("Control pins - CS:%d DC:%d RST:%d", pin_cs, pin_dc, pin_reset);
+    
     config->spi = spi;
     config->pin_sck = pin_sck;
     config->pin_mosi = pin_mosi;
@@ -78,14 +90,17 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
     gpio_set_function(config->pin_sck, GPIO_FUNC_SPI);
     gpio_set_function(config->pin_mosi, GPIO_FUNC_SPI);
     gpio_set_function(config->pin_miso, GPIO_FUNC_SPI);
+    LOG_DEBUG("SPI initialized at 10 MHz");
 
     // Reset
+    LOG_DEBUG("Performing hardware reset");
     gpio_put(config->pin_reset, 0);
     sleep_ms(10);
     gpio_put(config->pin_reset, 1);
     sleep_ms(120);
 
     // Initialization sequence
+    LOG_DEBUG("Starting ILI9225 register initialization");
     ili9225_write_command(config, ILI9225_DISP_CTRL1);
     ili9225_write_data16(config, 0x0000);
     ili9225_write_command(config, ILI9225_DISP_CTRL2);
@@ -160,6 +175,8 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
     ili9225_write_command(config, ILI9225_DISP_CTRL1);
     ili9225_write_data16(config, 0x0017);
 
+    LOG_INFO("ILI9225 initialization complete");
+
     ili9225_set_rotation(config, ILI9225_PORTRAIT);
 }
 
@@ -186,10 +203,21 @@ void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation)
 }
 
 void ili9225_fill_screen(ili9225_config_t* config, uint16_t color) {
-    // TODO: Implement fill screen function for ILI9225
+    ili9225_fill_rect(config, 0, 0, config->width - 1, config->height - 1, color);
 }
 
 void ili9225_draw_pixel(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t color) {
+    if (!config || x >= config->width || y >= config->height) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_pixel: config is NULL");
+        } else {
+            LOG_TRACE("draw_pixel: out of bounds (%d, %d) - display is %dx%d", 
+                     x, y, config->width, config->height);
+        }
+#endif
+        return;
+    }
     ili9225_set_window(config, x, y, x, y);
     ili9225_write_data16(config, color);
 }
@@ -240,15 +268,90 @@ void ili9225_draw_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_
 }
 
 void ili9225_fill_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
-    // TODO: Implement fill rectangle function for ILI9225
+    ili9225_set_window(config, x, y, x + w - 1, y + h - 1);
+    gpio_put(config->pin_dc, ILI9225_DATA_GPIO);
+    gpio_put(config->pin_cs, ILI9225_CS_LOW);
+    for (uint32_t i = 0; i < (uint32_t)w * h; ++i) {
+        uint8_t buf[2] = {color >> 8, color & 0xFF};
+        spi_write_blocking(config->spi, buf, 2);
+    }
+    gpio_put(config->pin_cs, ILI9225_CS_HIGH);
 }
 
 void ili9225_draw_circle(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t r, uint16_t color) {
-    // TODO: Implement draw circle function for ILI9225
+    if (!config) {
+        LOG_ERROR("draw_circle: config is NULL");
+        return;
+    }
+    if (r == 0 || x < r || y < r || x + r >= config->width || y + r >= config->height
+        || x - r >= config->width || y - r >= config->height) {
+        LOG_TRACE("draw_circle: invalid parameters (x:%d, y:%d, r:%d) for display %dx%d",
+            x, y, r, config->width, config->height);
+        return;
+    }
+    int16_t f = 1 - r;
+    int16_t ddF_x = 1;
+    int16_t ddF_y = -2 * r;
+    int16_t x0 = 0;
+    int16_t y0 = r;
+
+    ili9225_draw_pixel(config, x, y + r, color);
+    ili9225_draw_pixel(config, x, y - r, color);
+    ili9225_draw_pixel(config, x + r, y, color);
+    ili9225_draw_pixel(config, x - r, y, color);
+    while (x0 < y0) {
+        if (f >= 0) {
+            y0--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x0++;
+        ddF_x += 2;
+        f += ddF_x;
+
+        ili9225_draw_pixel(config, x + x0, y + y0, color);
+        ili9225_draw_pixel(config, x - x0, y + y0, color);
+        ili9225_draw_pixel(config, x + x0, y - y0, color);
+        ili9225_draw_pixel(config, x - x0, y - y0, color);
+        ili9225_draw_pixel(config, x + y0, y + x0, color);
+        ili9225_draw_pixel(config, x - y0, y + x0, color);
+        ili9225_draw_pixel(config, x + y0, y - x0, color);
+        ili9225_draw_pixel(config, x - y0, y - x0, color);
+    }
 }
 
 void ili9225_fill_circle(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t r, uint16_t color) {
-    // TODO: Implement fill circle function for ILI9225
+    if (!config) {
+        LOG_ERROR("fill_circle: config is NULL");
+        return;
+    }
+    if (r == 0) return;
+    
+    int16_t f = 1 - r;
+    int16_t ddF_x = 1;
+    int16_t ddF_y = -2 * r;
+    int16_t x0 = 0;
+    int16_t y0 = r;
+
+    // Draw vertical line through center
+    ili9225_draw_line(config, x, y - r, x, y + r, color);
+    
+    while (x0 < y0) {
+        if (f >= 0) {
+            y0--;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        x0++;
+        ddF_x += 2;
+        f += ddF_x;
+
+        // Draw horizontal lines to fill the circle
+        ili9225_draw_line(config, x - x0, y + y0, x + x0, y + y0, color);
+        ili9225_draw_line(config, x - x0, y - y0, x + x0, y - y0, color);
+        ili9225_draw_line(config, x - y0, y + x0, x + y0, y + x0, color);
+        ili9225_draw_line(config, x - y0, y - x0, x + y0, y - x0, color);
+    }
 }
 
 void ili9225_draw_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
@@ -265,14 +368,100 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
 }
 
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, uint16_t color, uint8_t size) {
-    // TODO: Implement draw text function for ILI9225
+    if (!config || !text) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_text: config is NULL");
+        }
+        if (!text) {
+            LOG_ERROR("draw_text: text is NULL");
+        }
+#endif
+        return;
+    }
+    uint16_t cur_x = x;
+    uint16_t cur_y = y;
+    while (*text) {
+        if (*text == '\n') {
+            cur_x = x;
+            cur_y += 8 * size;
+            ++text;
+            continue;
+        }
+        uint8_t c = *text - 32;  // Font starts at space (32)
+        if (c > 95) continue;
+        for (uint8_t col = 0; col < 8; col++) {
+            uint8_t line = font6x8[c][col];
+            for (uint8_t row = 0; row < 8; row++) {
+                if (line & 0x80) {
+                    if (size == 1) {
+                        ili9225_draw_pixel(config, cur_x + col, cur_y + row, color);
+                    } else {
+                        ili9225_fill_rect(config, cur_x + col * size, cur_y + row * size, size, size, color);
+                    }
+                }
+                line <<= 1;
+            }
+        }
+        cur_x += 6 * size;  // Char width 6
+        ++text;
+    }
 }
 
 void ili9225_draw_char(ili9225_config_t* config, uint16_t x, uint16_t y, char c, uint16_t color, uint8_t size) {
-    // TODO: Implement draw character function for ILI9225
+    if (!config) {
+#ifdef ILI9225_DEBUG_LOGGING
+        LOG_ERROR("draw_char: config is NULL");
+#endif
+        return;
+    }
+    
+    // Handle printable ASCII characters (space to ~ : 32-126)
+    if (c < 32 || c > 126) {
+#ifdef ILI9225_DEBUG_LOGGING
+        LOG_TRACE("draw_char: unprintable character %d", c);
+#endif
+        return;
+    }
+    
+    uint8_t char_index = c - 32;  // Font starts at space (32)
+    
+    // Draw the character using the 6x8 font
+    for (uint8_t col = 0; col < 6; col++) {
+        uint8_t line = font6x8[char_index][col];
+        for (uint8_t row = 0; row < 8; row++) {
+            if (line & 0x80) {
+                if (size == 1) {
+                    ili9225_draw_pixel(config, x + col, y + row, color);
+                } else {
+                    ili9225_fill_rect(config, x + col * size, y + row * size, size, size, color);
+                }
+            }
+            line <<= 1;
+        }
+    }
 }
 
 void ili9225_draw_bitmap(ili9225_config_t* config, uint16_t x, uint16_t y,
-                     const uint8_t* bitmap, uint16_t w, uint16_t h) {
-    // TODO: Implement draw bitmap function for ILI9225
+                     const uint8_t* bitmap, uint16_t w, uint16_t h, uint16_t color) {
+    if (!config || !bitmap) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_bitmap: config is NULL");
+        }
+        if (!bitmap) {
+            LOG_ERROR("draw_bitmap: bitmap is NULL");
+        }
+#endif
+        return;
+    }
+
+    uint16_t byte_width = (w + 7) / 8;
+    for (uint16_t j = 0; j < h; j++) {
+        for (uint16_t i = 0; i < w; i++) {
+            if (bitmap[j * byte_width + i / 8] & (128 >> (i & 7))) {
+                ili9225_draw_pixel(config, x + i, y + j, color);
+            }
+        }
+    }
 }
