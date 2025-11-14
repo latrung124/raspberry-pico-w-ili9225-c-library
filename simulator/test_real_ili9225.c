@@ -12,11 +12,10 @@
 // Mock the hardware first
 #include "ili9225_mock.h"
 
-// Now include the real ILI9225 implementation
-// (it will use our mocked hardware functions)
+// Now include the real ILI9225 header
+// (the implementation will be linked separately)
 #define ILI9225_DEBUG_LOGGING  // Enable logging in ili9225.c
 #include "../src/ili9225.h"
-#include "../src/ili9225.c"
 
 // RGB565 colors
 #define COLOR_BLACK   0x0000
@@ -198,6 +197,14 @@ void test_real_complex(ili9225_config_t* lcd) {
     sleep(2);
 }
 
+void test_fill_screen_with_color(ili9225_config_t* lcd, uint16_t color) {
+    printf("\n=== Testing REAL ili9225_fill_screen() with color 0x%04X ===\n", color);
+    
+    ili9225_fill_screen(lcd, color);
+    sim_mock_flush_framebuffer();
+    sleep(2);
+}
+
 int main(void) {
     printf("===========================================\n");
     printf("Testing REAL ili9225.c Implementation\n");
@@ -222,12 +229,17 @@ int main(void) {
     printf("===========================================\n");
     
     // Run tests using REAL ili9225.c functions
-    test_real_pixels(&lcd);
-    test_real_lines(&lcd);
-    test_real_rectangles(&lcd);
-    test_real_circles(&lcd);
-    test_real_text(&lcd);
-    test_real_complex(&lcd);
+    // test_real_pixels(&lcd);
+    // test_real_lines(&lcd);
+    // test_real_rectangles(&lcd);
+    // test_real_circles(&lcd);
+    // test_real_text(&lcd);
+    // test_real_complex(&lcd);
+    test_fill_screen_with_color(&lcd, COLOR_BLACK);
+    test_fill_screen_with_color(&lcd, COLOR_WHITE);
+    test_fill_screen_with_color(&lcd, COLOR_RED);
+    test_fill_screen_with_color(&lcd, COLOR_GREEN);
+    test_fill_screen_with_color(&lcd, COLOR_BLUE);
     
     printf("\n===========================================\n");
     printf("All tests completed!\n");

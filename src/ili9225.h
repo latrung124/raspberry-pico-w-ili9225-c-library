@@ -12,7 +12,13 @@
 
 #include <stdint.h>
 
-#ifndef SIMULATOR_BUILD
+#ifdef SIMULATOR_BUILD
+// Mock headers for simulator
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
+#include "hardware/gpio.h"
+#else
+// Real Pico SDK headers
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #endif

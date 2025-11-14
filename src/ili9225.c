@@ -11,9 +11,7 @@
 
 #include <stdlib.h>
 
-#ifndef SIMULATOR_BUILD
 #include "hardware/gpio.h"
-#endif
 #include "terminal6x8.h"
 #include "log.h"
 
@@ -205,7 +203,7 @@ void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation)
 }
 
 void ili9225_fill_screen(ili9225_config_t* config, uint16_t color) {
-    ili9225_fill_rect(config, 0, 0, config->width - 1, config->height - 1, color);
+    ili9225_fill_rect(config, 0, 0, config->width, config->height, color);
 }
 
 void ili9225_draw_pixel(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t color) {

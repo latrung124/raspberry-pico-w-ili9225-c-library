@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(ili9225_simulator C)
+# Force native compilation (not cross-compile for ARM)
+# This allows us to run on the development machine and connect to simulator
+project(ili9225_simulator C CXX)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Define SIMULATOR_BUILD for conditional compilation
@@ -25,6 +28,7 @@ add_library(ili9225_mock STATIC
 # Test executable - tests real ili9225.c with mocked hardware
 add_executable(test_real_ili9225
     test_real_ili9225.c
+    ../src/ili9225.c
 )
 
 target_link_libraries(test_real_ili9225
@@ -51,11 +55,16 @@ add_custom_target(run_test
 
 # Print usage instructions
 message(STATUS "========================================")
-message(STATUS "ILI9225 Web Simulator Build")
+message(STATUS "ILI9225 Simulator - Native Build")
 message(STATUS "========================================")
 message(STATUS "Build: cmake -B build && cmake --build build")
 message(STATUS "Run:   ./build/test_real_ili9225")
 message(STATUS "")
+message(STATUS "This builds for your HOST machine (x86_64)")
+message(STATUS "Tests REAL ili9225.c with mocked Pico SDK calls")
+message(STATUS "Hardware calls (SPI/GPIO) are intercepted and")
+message(STATUS "sent to web simulator via TCP")
+message(STATUS "")
 message(STATUS "Remember to start web simulator first:")
-message(STATUS "  ./run_web.sh")
+message(STATUS "  cd .. && ./simulator/run_web.sh")
 message(STATUS "========================================")
