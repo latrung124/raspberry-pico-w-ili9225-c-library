@@ -4,10 +4,27 @@
  * 
  * This file tests your real ili9225.c drawing functions by mocking
  * the hardware layer and redirecting output to the simulator.
+ * 
+ * Usage: ./test_real_ili9225 [options]
+ * Options:
+ *   --all              Run all tests (default)
+ *   --pixels           Test pixel drawing
+ *   --lines            Test line drawing
+ *   --rectangles       Test rectangle drawing
+ *   --circles          Test circle drawing
+ *   --text             Test text rendering
+ *   --complex          Test complex UI drawing
+ *   --help             Show this help message
+ * 
+ * Examples:
+ *   ./test_real_ili9225                    # Run all tests
+ *   ./test_real_ili9225 --pixels --lines   # Run only pixel and line tests
  */
 
 #include <stdio.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
 
 // Mock the hardware first
 #include "ili9225_mock.h"
@@ -205,7 +222,117 @@ void test_fill_screen_with_color(ili9225_config_t* lcd, uint16_t color) {
     sleep(2);
 }
 
-int main(void) {
+void print_help(const char* program_name) {
+    printf("Usage: %s [options]\n\n", program_name);
+    printf("Test the real ili9225.c implementation with the web simulator.\n\n");
+    printf("Options:\n");
+    printf("  --all              Run all tests (default)\n");
+    printf("  --pixels           Test pixel drawing (ili9225_draw_pixel)\n");
+    printf("  --lines            Test line drawing (ili9225_draw_line)\n");
+    printf("  --rectangles       Test rectangle drawing (ili9225_draw_rect, ili9225_fill_rect)\n");
+    printf("  --circles          Test circle drawing (ili9225_draw_circle, ili9225_fill_circle)\n");
+    printf("  --text             Test text rendering (ili9225_draw_text, ili9225_draw_char)\n");
+    printf("  --complex          Test complex UI drawing\n");
+    printf("  --fill-screen COLOR Test fill screen with specified color\n");
+    printf("                     COLOR can be: black, white, red, green, blue, yellow, cyan, magenta\n");
+    printf("                     or a hex value like 0xF800\n");
+    printf("  --help             Show this help message\n\n");
+    printf("Examples:\n");
+    printf("  %s                              # Run all tests\n", program_name);
+    printf("  %s --pixels --lines             # Run only pixel and line tests\n", program_name);
+    printf("  %s --fill-screen red            # Fill screen with red color\n", program_name);
+    printf("  %s --circles --text             # Run circle and text tests\n", program_name);
+    printf("\n");
+}
+
+uint16_t parse_color(const char* color_str) {
+    // Check for color names
+    if (strcmp(color_str, "black") == 0) return COLOR_BLACK;
+    if (strcmp(color_str, "white") == 0) return COLOR_WHITE;
+    if (strcmp(color_str, "red") == 0) return COLOR_RED;
+    if (strcmp(color_str, "green") == 0) return COLOR_GREEN;
+    if (strcmp(color_str, "blue") == 0) return COLOR_BLUE;
+    if (strcmp(color_str, "yellow") == 0) return COLOR_YELLOW;
+    if (strcmp(color_str, "cyan") == 0) return COLOR_CYAN;
+    if (strcmp(color_str, "magenta") == 0) return COLOR_MAGENTA;
+    
+    // Try to parse as hex value
+    if (strncmp(color_str, "0x", 2) == 0 || strncmp(color_str, "0X", 2) == 0) {
+        unsigned int value;
+        if (sscanf(color_str, "%x", &value) == 1) {
+            return (uint16_t)value;
+        }
+    }
+    
+    fprintf(stderr, "Warning: Unknown color '%s', using black\n", color_str);
+    return COLOR_BLACK;
+}
+
+int main(int argc, char* argv[]) {
+    // Parse command-line arguments
+    bool run_all = true;
+    bool run_pixels = false;
+    bool run_lines = false;
+    bool run_rectangles = false;
+    bool run_circles = false;
+    bool run_text = false;
+    bool run_complex = false;
+    bool run_fill_screen = false;
+    uint16_t fill_color = COLOR_BLACK;
+    
+    // If any specific test is requested, disable run_all
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            print_help(argv[0]);
+            return 0;
+        }
+        
+        if (strcmp(argv[i], "--all") == 0) {
+            run_all = true;
+        } else if (strcmp(argv[i], "--pixels") == 0) {
+            run_pixels = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--lines") == 0) {
+            run_lines = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--rectangles") == 0) {
+            run_rectangles = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--circles") == 0) {
+            run_circles = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--text") == 0) {
+            run_text = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--complex") == 0) {
+            run_complex = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--fill-screen") == 0) {
+            run_fill_screen = true;
+            run_all = false;
+            if (i + 1 < argc) {
+                fill_color = parse_color(argv[++i]);
+            } else {
+                fprintf(stderr, "Error: --fill-screen requires a color argument\n");
+                return 1;
+            }
+        } else {
+            fprintf(stderr, "Unknown option: %s\n", argv[i]);
+            fprintf(stderr, "Use --help for usage information\n");
+            return 1;
+        }
+    }
+    
+    // If run_all is still true, enable all tests
+    if (run_all) {
+        run_pixels = true;
+        run_lines = true;
+        run_rectangles = true;
+        run_circles = true;
+        run_text = true;
+        run_complex = true;
+    }
+    
     printf("===========================================\n");
     printf("Testing REAL ili9225.c Implementation\n");
     printf("===========================================\n\n");
@@ -228,18 +355,34 @@ int main(void) {
     printf("Running Test Suite on REAL Functions\n");
     printf("===========================================\n");
     
-    // Run tests using REAL ili9225.c functions
-    // test_real_pixels(&lcd);
-    // test_real_lines(&lcd);
-    // test_real_rectangles(&lcd);
-    // test_real_circles(&lcd);
-    // test_real_text(&lcd);
-    // test_real_complex(&lcd);
-    test_fill_screen_with_color(&lcd, COLOR_BLACK);
-    test_fill_screen_with_color(&lcd, COLOR_WHITE);
-    test_fill_screen_with_color(&lcd, COLOR_RED);
-    test_fill_screen_with_color(&lcd, COLOR_GREEN);
-    test_fill_screen_with_color(&lcd, COLOR_BLUE);
+    // Run tests based on command-line options
+    if (run_pixels) {
+        test_real_pixels(&lcd);
+    }
+    
+    if (run_lines) {
+        test_real_lines(&lcd);
+    }
+    
+    if (run_rectangles) {
+        test_real_rectangles(&lcd);
+    }
+    
+    if (run_circles) {
+        test_real_circles(&lcd);
+    }
+    
+    if (run_text) {
+        test_real_text(&lcd);
+    }
+    
+    if (run_complex) {
+        test_real_complex(&lcd);
+    }
+    
+    if (run_fill_screen) {
+        test_fill_screen_with_color(&lcd, fill_color);
+    }
     
     printf("\n===========================================\n");
     printf("All tests completed!\n");
