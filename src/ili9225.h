@@ -24,6 +24,7 @@
 #endif
 
 #include "ili9225_defs.h"
+#include "fonts.h"
 #include "utilities/utils.h"
 
 // Structure to hold ILI9225 configuration
@@ -199,12 +200,12 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
  * @param x X coordinate of the top-left corner of the text
  * @param y Y coordinate of the top-left corner of the text
  * @param text Null-terminated string to draw
+ * @param font Pointer to font_t structure defining the font
  * @param color 16-bit color value of the text
- * @param size Text size (scaling factor)
  * @return void
  */
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y,
-               const char* text, uint16_t color, uint8_t size);
+               const char* text, const font_t *font, uint16_t color);
 
 /**
  * @brief Draw a single character at specified coordinates with color and size
@@ -213,12 +214,12 @@ void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y,
  * @param x X coordinate of the top-left corner of the character
  * @param y Y coordinate of the top-left corner of the character
  * @param c Character to draw
+ * @param font Pointer to font_t structure defining the font
  * @param color 16-bit color value of the character
- * @param size Character size (scaling factor)
  * @return void
  */
 void ili9225_draw_char(ili9225_config_t* config, uint16_t x, uint16_t y,
-               char c, uint16_t color, uint8_t size);
+               char c, const font_t *font, uint16_t color);
 
 /**
  * @brief Draw a bitmap image at specified coordinates

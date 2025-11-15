@@ -52,8 +52,43 @@ void test_real_pixels(ili9225_config_t* lcd) {
     sleep(1);
     
     // Draw diagonal line using real function
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 220; i++) {
         ili9225_draw_pixel(lcd, i, i, COLOR_RED);
+    }
+    sim_mock_flush_framebuffer();
+    sleep(1);
+}
+
+void test_cross_lines(ili9225_config_t* lcd) {
+    printf("\n=== Testing REAL ili9225_draw_cross_lines() ===\n");
+    
+    ili9225_fill_screen(lcd, COLOR_WHITE);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw cross lines using real function
+    for (int i = 0; i < 176; i++) {
+        ili9225_draw_pixel(lcd, i, 110, COLOR_RED); // Horizontal
+    }
+
+    for (int i = 0; i < 220; i++) {
+        ili9225_draw_pixel(lcd, 88, i, COLOR_BLUE); // Vertical
+    }
+
+    sim_mock_flush_framebuffer();
+    sleep(1);
+}
+
+void test_diagonal_lines(ili9225_config_t* lcd) {
+    printf("\n=== Testing REAL ili9225_draw_diagonal_lines() ===\n");
+    
+    ili9225_fill_screen(lcd, COLOR_WHITE);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw diagonal lines using real function
+    for (int i = 0; i < 220; i++) {
+        ili9225_draw_pixel(lcd, i, i, COLOR_GREEN);             // Top-left to bottom-right
     }
     sim_mock_flush_framebuffer();
     sleep(1);
@@ -74,7 +109,7 @@ void test_real_lines(ili9225_config_t* lcd) {
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_line(lcd, 10, 70, 100, 150, COLOR_BLUE);
+    ili9225_draw_line(lcd, 10, 70, 40, 150, COLOR_BLUE);
     sim_mock_flush_framebuffer();
     sleep(1);
 }
@@ -148,30 +183,49 @@ void test_real_text(ili9225_config_t* lcd) {
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_text(lcd, 10, 10, "ILI9225 Test", COLOR_WHITE, 2);
+    ili9225_draw_text(lcd, 10, 10, "ILI9225 Test", &font_5x8, COLOR_WHITE);
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_text(lcd, 10, 40, "Real C Code!", COLOR_GREEN, 1);
+    ili9225_draw_text(lcd, 10, 40, "Real C Code!", &font_5x8, COLOR_GREEN);
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_text(lcd, 10, 60, "Testing", COLOR_CYAN, 1);
+    ili9225_draw_text(lcd, 10, 60, "Testing", &font_5x8, COLOR_CYAN);
     sim_mock_flush_framebuffer();
     sleep(1);
     
     // Test individual characters
-    ili9225_draw_char(lcd, 10, 90, 'A', COLOR_RED, 2);
+    ili9225_draw_char(lcd, 10, 90, 'A', &font_5x8, COLOR_RED);
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_char(lcd, 30, 90, 'B', COLOR_GREEN, 2);
+    ili9225_draw_char(lcd, 30, 90, 'B', &font_5x8, COLOR_GREEN);
     sim_mock_flush_framebuffer();
     sleep(1);
     
-    ili9225_draw_char(lcd, 50, 90, 'C', COLOR_BLUE, 2);
+    ili9225_draw_char(lcd, 50, 90, 'C', &font_5x8, COLOR_BLUE);
     sim_mock_flush_framebuffer();
     sleep(2);
+}
+
+void test_temperature_text(ili9225_config_t* lcd) {
+    printf("\n=== Testing REAL Temperature Text Display ===\n");
+    
+    ili9225_fill_screen(lcd, COLOR_BLACK);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Simulate temperature readings
+    for (int temp = -10; temp <= 40; temp += 10) {
+        char temp_str[16];
+        snprintf(temp_str, sizeof(temp_str), "Temp: %d C", temp);
+        
+        ili9225_fill_rect(lcd, 0, 80, lcd->width, 20, COLOR_BLACK); // Clear area
+        ili9225_draw_text(lcd, 10, 80, temp_str, &font_5x8, COLOR_YELLOW);
+        sim_mock_flush_framebuffer();
+        sleep(1);
+    }
 }
 
 void test_real_complex(ili9225_config_t* lcd) {
@@ -184,7 +238,7 @@ void test_real_complex(ili9225_config_t* lcd) {
     // Title bar
     ili9225_fill_rect(lcd, 0, 0, 176, 20, COLOR_BLUE);
     sim_mock_flush_framebuffer();
-    ili9225_draw_text(lcd, 10, 5, "Real Code UI", COLOR_WHITE, 1);
+    ili9225_draw_text(lcd, 10, 5, "Real Code UI", &font_5x8, COLOR_WHITE);
     sim_mock_flush_framebuffer();
     sleep(1);
     
@@ -209,7 +263,7 @@ void test_real_complex(ili9225_config_t* lcd) {
     // Status bar
     ili9225_fill_rect(lcd, 0, 200, 176, 20, COLOR_BLACK);
     sim_mock_flush_framebuffer();
-    ili9225_draw_text(lcd, 5, 205, "Status: OK", COLOR_GREEN, 1);
+    ili9225_draw_text(lcd, 5, 205, "Status: OK", &font_5x8, COLOR_GREEN);
     sim_mock_flush_framebuffer();
     sleep(2);
 }
@@ -232,6 +286,7 @@ void print_help(const char* program_name) {
     printf("  --rectangles       Test rectangle drawing (ili9225_draw_rect, ili9225_fill_rect)\n");
     printf("  --circles          Test circle drawing (ili9225_draw_circle, ili9225_fill_circle)\n");
     printf("  --text             Test text rendering (ili9225_draw_text, ili9225_draw_char)\n");
+    printf("  --temperature      Test temperature text display\n");
     printf("  --complex          Test complex UI drawing\n");
     printf("  --fill-screen COLOR Test fill screen with specified color\n");
     printf("                     COLOR can be: black, white, red, green, blue, yellow, cyan, magenta\n");
@@ -278,6 +333,9 @@ int main(int argc, char* argv[]) {
     bool run_text = false;
     bool run_complex = false;
     bool run_fill_screen = false;
+    bool run_temperature = false;
+    bool run_cross_lines = false;
+    bool run_diagonal_lines = false;
     uint16_t fill_color = COLOR_BLACK;
     
     // If any specific test is requested, disable run_all
@@ -316,7 +374,17 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "Error: --fill-screen requires a color argument\n");
                 return 1;
             }
-        } else {
+        } else if (strcmp(argv[i], "--temperature") == 0) {
+            run_temperature = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--cross-lines") == 0)  {
+            run_cross_lines = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--diagonal-lines") == 0)  {
+            run_diagonal_lines = true;
+            run_all = false;
+        } else
+        {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             fprintf(stderr, "Use --help for usage information\n");
             return 1;
@@ -331,6 +399,8 @@ int main(int argc, char* argv[]) {
         run_circles = true;
         run_text = true;
         run_complex = true;
+        run_cross_lines = true;
+        run_diagonal_lines = true;
     }
     
     printf("===========================================\n");
@@ -382,6 +452,18 @@ int main(int argc, char* argv[]) {
     
     if (run_fill_screen) {
         test_fill_screen_with_color(&lcd, fill_color);
+    }
+
+    if (run_temperature) {
+        test_temperature_text(&lcd);
+    }
+
+    if (run_cross_lines) {
+        test_cross_lines(&lcd);
+    }
+
+    if (run_diagonal_lines) {
+        test_diagonal_lines(&lcd);
     }
     
     printf("\n===========================================\n");

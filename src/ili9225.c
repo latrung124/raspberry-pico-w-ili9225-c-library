@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 #include "hardware/gpio.h"
-#include "terminal6x8.h"
 #include "log.h"
 
 // Uncomment to enable detailed logging
@@ -367,8 +366,8 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
     // TODO: Implement fill triangle function for ILI9225
 }
 
-void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, uint16_t color, uint8_t size) {
-    if (!config || !text) {
+void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const font_t *font, uint16_t color) {
+    if (!config || !text || !font) {
 #ifdef ILI9225_DEBUG_LOGGING
         if (!config) {
             LOG_ERROR("draw_text: config is NULL");
@@ -376,68 +375,53 @@ void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const c
         if (!text) {
             LOG_ERROR("draw_text: text is NULL");
         }
+        if (!font) {
+            LOG_ERROR("draw_text: font is NULL");
+        }
 #endif
         return;
     }
-    uint16_t cur_x = x;
-    uint16_t cur_y = y;
+
+    uint16_t current_x = x;
+    
     while (*text) {
-        if (*text == '\n') {
-            cur_x = x;
-            cur_y += 8 * size;
-            ++text;
-            continue;
-        }
-        uint8_t c = *text - 32;  // Font starts at space (32)
-        if (c > 95) continue;
-        for (uint8_t col = 0; col < 8; col++) {
-            uint8_t line = font6x8[c][col];
-            for (uint8_t row = 0; row < 8; row++) {
-                if (line & 0x80) {
-                    if (size == 1) {
-                        ili9225_draw_pixel(config, cur_x + col, cur_y + row, color);
-                    } else {
-                        ili9225_fill_rect(config, cur_x + col * size, cur_y + row * size, size, size, color);
-                    }
-                }
-                line <<= 1;
-            }
-        }
-        cur_x += 6 * size;  // Char width 6
-        ++text;
+        ili9225_draw_char(config, current_x, y, *text, font, color);
+        current_x += font->width + 1; // +1 for spacing between characters
+        text++;
     }
 }
 
-void ili9225_draw_char(ili9225_config_t* config, uint16_t x, uint16_t y, char c, uint16_t color, uint8_t size) {
-    if (!config) {
+void ili9225_draw_char(ili9225_config_t *config, uint16_t x, uint16_t y, char c, const font_t *font, uint16_t color) {
+    if (!config || !font) {
 #ifdef ILI9225_DEBUG_LOGGING
-        LOG_ERROR("draw_char: config is NULL");
+        if (!config) {
+            LOG_ERROR("draw_char: config is NULL");
+        }
+        if (!font) {
+            LOG_ERROR("draw_char: font is NULL");
+        }
 #endif
         return;
     }
-    
-    // Handle printable ASCII characters (space to ~ : 32-126)
-    if (c < 32 || c > 126) {
-#ifdef ILI9225_DEBUG_LOGGING
-        LOG_TRACE("draw_char: unprintable character %d", c);
-#endif
+
+    // Check if character is in font range
+    if (c < font->first_char || c > font->last_char) {
         return;
     }
     
-    uint8_t char_index = c - 32;  // Font starts at space (32)
+    // Calculate character index in font data
+    uint16_t index = (c - font->first_char) * font->width;
     
-    // Draw the character using the 6x8 font
-    for (uint8_t col = 0; col < 6; col++) {
-        uint8_t line = font6x8[char_index][col];
-        for (uint8_t row = 0; row < 8; row++) {
-            if (line & 0x80) {
-                if (size == 1) {
-                    ili9225_draw_pixel(config, x + col, y + row, color);
-                } else {
-                    ili9225_fill_rect(config, x + col * size, y + row * size, size, size, color);
-                }
+    // Draw each pixel of the character
+    for (uint8_t row = 0; row < font->height; row++) {
+        for (uint8_t col = 0; col < font->width; col++) {
+            // Get the pixel value from font data
+            uint8_t pixel_data = font->data[index + col];
+            uint8_t pixel_value = (pixel_data >> (7 - row)) & 0x01;
+            
+            if (pixel_value) {
+                ili9225_draw_pixel(config, x + col, y + row, color);
             }
-            line <<= 1;
         }
     }
 }
