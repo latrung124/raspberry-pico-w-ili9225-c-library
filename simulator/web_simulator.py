@@ -170,12 +170,17 @@ class WebSimulator:
         new_image = Image.new('RGB', (width, height))
         pixels = new_image.load()
 
+        # ILI9225 in portrait mode (0x0018) uses origin at bottom-right
+        # and increments vertically then horizontally (bit 3 AM=1, bit 4 ID1=1)
+        # The framebuffer from C code is in row-major order (y, x)
+        # but the display coordinates need to be flipped vertically
         idx = 0
         for y in range(height):
             for x in range(width):
                 value = (raw[idx] << 8) | raw[idx + 1]
                 idx += 2
-                pixels[x, y] = Color.rgb565_to_rgb888(value)
+                # Flip vertically: height - 1 - y
+                pixels[x, height - 1 - y] = Color.rgb565_to_rgb888(value)
 
         self.image = new_image
         self.draw = ImageDraw.Draw(self.image)
