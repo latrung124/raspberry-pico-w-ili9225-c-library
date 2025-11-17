@@ -391,6 +391,37 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
     // TODO: Implement fill triangle function for ILI9225
 }
 
+void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const GFXfont *font, uint16_t color) {
+    if (!config || !text || !font) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_gfx_text: config is NULL");
+        }
+        if (!text) {
+            LOG_ERROR("draw_gfx_text: text is NULL");
+        }
+        if (!font) {
+            LOG_ERROR("draw_gfx_text: font is NULL");
+        }
+#endif
+        return;
+    }
+
+    uint16_t cursor_x = x;
+    uint16_t cursor_y = y;
+    
+    while (*text) {
+        if (*text == '\n') {
+            cursor_x = x;
+            cursor_y += font->yAdvance;
+        } else {
+            ili9225_draw_gfx_char(config, cursor_x, cursor_y, *text, font, color);
+            cursor_x += font->glyph[*text - font->first].xAdvance;
+        }
+        text++;
+    }
+}
+
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const font_t *font, uint16_t color) {
     if (!config || !text || !font) {
 #ifdef ILI9225_DEBUG_LOGGING
@@ -413,6 +444,40 @@ void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const c
         ili9225_draw_char(config, current_x, y, *text, font, color);
         current_x += font->width + 1; // +1 for spacing between characters
         text++;
+    }
+}
+
+void ili9225_draw_gfx_char(ili9225_config_t* config, uint16_t x, uint16_t y,
+                   char c, const GFXfont *font, uint16_t color) {
+    if (!config || !font) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_gfx_char: config is NULL");
+        }
+        if (!font) {
+            LOG_ERROR("draw_gfx_char: font is NULL");
+        }
+#endif
+        return;
+    }
+
+    if (c < font->first || c > font->last) return;
+    
+    const GFXglyph *glyph = &font->glyph[c - font->first];
+    uint16_t bo = glyph->bitmapOffset;
+    uint8_t bits = 0, bit = 0;
+    
+    for (uint8_t yy = 0; yy < glyph->height; yy++) {
+        for (uint8_t xx = 0; xx < glyph->width; xx++) {
+            if (bit == 0) {
+                bits = font->bitmap[bo++];
+            }
+            if (bits & 0x80) {
+                ili9225_draw_pixel(config, x + glyph->xOffset + xx, y + glyph->yOffset + yy, color);
+            }
+            bits <<= 1;
+            bit = (bit + 1) & 7;
+        }
     }
 }
 

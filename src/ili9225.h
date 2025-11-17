@@ -25,6 +25,7 @@
 
 #include "ili9225_defs.h"
 #include "fonts.h"
+#include "gfx_fonts.h"
 #include "utilities/utils.h"
 
 // Structure to hold ILI9225 configuration
@@ -194,6 +195,20 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
                    uint16_t color);
 
 /**
+ * @brief Draw GFX text at specified coordinates with color
+ * 
+ * @param config Pointer to ili9225_config_t structure
+ * @param x X coordinate of the top-left corner of the text
+ * @param y Y coordinate of the top-left corner of the text
+ * @param text Null-terminated string to draw
+ * @param font Pointer to GFXfont structure defining the font
+ * @param color 16-bit color value of the text
+ * @return void
+ */
+void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y,
+               const char* text, const GFXfont *font, uint16_t color);
+
+/**
  * @brief Draw text at specified coordinates with color and size
  * 
  * @param config Pointer to ili9225_config_t structure
@@ -207,6 +222,19 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y,
                const char* text, const font_t *font, uint16_t color);
 
+/**
+ * @brief Draw a single GFX character at specified coordinates with color
+ * 
+ * @param config Pointer to ili9225_config_t structure
+ * @param x X coordinate of the top-left corner of the character
+ * @param y Y coordinate of the top-left corner of the character
+ * @param c Character to draw
+ * @param font Pointer to GFXfont structure defining the font
+ * @param color 16-bit color value of the character
+ * @return void
+ */
+void ili9225_draw_gfx_char(ili9225_config_t* config, uint16_t x, uint16_t y,
+                   char c, const GFXfont *font, uint16_t color);
 /**
  * @brief Draw a single character at specified coordinates with color and size
  * 
