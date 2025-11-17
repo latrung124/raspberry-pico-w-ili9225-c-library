@@ -72,7 +72,7 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
  * @param rotation Desired rotation (0, 90, 180, 270 degrees)
  * @return void
  */
-void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation);
+void ili9225_set_orientation(ili9225_config_t* config, ili9225_rotation_t rotation);
 
 /**
  * @brief Fill the entire screen with a specific color

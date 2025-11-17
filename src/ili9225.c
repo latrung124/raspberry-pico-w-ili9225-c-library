@@ -100,86 +100,70 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
 
     // Initialization sequence
     LOG_DEBUG("Starting ILI9225 register initialization");
+    ili9225_write_command(config, ILI9225_POWER_CTRL1);
+    ili9225_write_data16(config, 0x0000);
+    ili9225_write_command(config, ILI9225_POWER_CTRL2);
+    ili9225_write_data16(config, 0x0000);
+    ili9225_write_command(config, ILI9225_POWER_CTRL3);
+    ili9225_write_data16(config, 0x0000);
+    ili9225_write_command(config, ILI9225_POWER_CTRL4);
+    ili9225_write_data16(config, 0x0000);
+    ili9225_write_command(config, ILI9225_POWER_CTRL5);
+    ili9225_write_data16(config, 0x0000);
+
+    sleep_ms(40);
+
+    ili9225_write_command(config, ILI9225_OSC_CTRL);
+    ili9225_write_data16(config, 0x0001);
+    sleep_ms(10);
+
+    ili9225_write_command(config, ILI9225_POWER_CTRL2);
+    ili9225_write_data16(config, 0x0018);
+    ili9225_write_command(config, ILI9225_POWER_CTRL3);
+    ili9225_write_data16(config, 0x6121);
+    ili9225_write_command(config, ILI9225_POWER_CTRL4);
+    ili9225_write_data16(config, 0x006F);
+    ili9225_write_command(config, ILI9225_POWER_CTRL5);
+    ili9225_write_data16(config, 0x495F);
+    ili9225_write_command(config, ILI9225_POWER_CTRL1);
+    ili9225_write_data16(config, 0x0800);
+    sleep_ms(10);
+
+    ili9225_write_command(config, ILI9225_POWER_CTRL2);
+    ili9225_write_data16(config, 0x103B);
+    sleep_ms(50);
+
+    ili9225_write_command(config, ILI9225_DRIVER_OUTPUT_CTRL);
+    ili9225_write_data16(config, 0x011C);
+    ili9225_write_command(config, ILI9225_LCD_AC_DRIVING_CTRL);
+    ili9225_write_data16(config, 0x0100);
+
+    // Set default orientation (will set entry mode)
+    ili9225_set_orientation(config, ILI9225_PORTRAIT);
+
     ili9225_write_command(config, ILI9225_DISP_CTRL1);
     ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_DISP_CTRL2);
+    ili9225_write_command(config, ILI9225_BLANK_PERIOD_CTRL1);
     ili9225_write_data16(config, 0x0808);
     ili9225_write_command(config, ILI9225_FRAME_CYCLE_CTRL);
     ili9225_write_data16(config, 0x1100);
-    ili9225_write_command(config, ILI9225_RGB_DISP_IF_CTRL1);
+    ili9225_write_command(config, ILI9225_INTERFACE_CTRL);
     ili9225_write_data16(config, 0x0000);
     ili9225_write_command(config, ILI9225_OSC_CTRL);
     ili9225_write_data16(config, 0x0D01);
-    sleep_ms(10);
     ili9225_write_command(config, ILI9225_VCI_RECYCLING);
     ili9225_write_data16(config, 0x0020);
-    ili9225_write_command(config, ILI9225_RAM_ADDR_SET1);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_RAM_ADDR_SET2);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_POWER_CTRL1);
-    ili9225_write_data16(config, 0x0A00);
-    ili9225_write_command(config, ILI9225_POWER_CTRL2);
-    ili9225_write_data16(config, 0x1038);
-    sleep_ms(10);
-    ili9225_write_command(config, ILI9225_POWER_CTRL3);
-    ili9225_write_data16(config, 0x1121);
-    ili9225_write_command(config, ILI9225_POWER_CTRL4);
-    ili9225_write_data16(config, 0x0066);
-    ili9225_write_command(config, ILI9225_POWER_CTRL5);
-    ili9225_write_data16(config, 0x5F00);
-    ili9225_write_command(config, ILI9225_GATE_SCAN_CTRL);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_VERTICAL_SCROLL_CTRL1);
-    ili9225_write_data16(config, 0x00DB);
-    ili9225_write_command(config, ILI9225_VERTICAL_SCROLL_CTRL2);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_VERTICAL_SCROLL_CTRL3);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_PARTIAL_DRIVING_POS1);
-    ili9225_write_data16(config, 0x00DB);
-    ili9225_write_command(config, ILI9225_PARTIAL_DRIVING_POS2);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_HORIZONTAL_WINDOW_ADDR1);
-    ili9225_write_data16(config, 0x00AF);
-    ili9225_write_command(config, ILI9225_HORIZONTAL_WINDOW_ADDR2);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_VERTICAL_WINDOW_ADDR1);
-    ili9225_write_data16(config, 0x00DB);
-    ili9225_write_command(config, ILI9225_VERTICAL_WINDOW_ADDR2);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL1);
-    ili9225_write_data16(config, 0x0000);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL2);
-    ili9225_write_data16(config, 0x0807);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL3);
-    ili9225_write_data16(config, 0x0A02);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL4);
-    ili9225_write_data16(config, 0x020A);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL5);
-    ili9225_write_data16(config, 0x0708);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL6);
-    ili9225_write_data16(config, 0x0205);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL7);
-    ili9225_write_data16(config, 0x0006);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL8);
-    ili9225_write_data16(config, 0x0502);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL9);
-    ili9225_write_data16(config, 0x0404);
-    ili9225_write_command(config, ILI9225_GAMMA_CTRL10);
-    ili9225_write_data16(config, 0x040B);
+    sleep_ms(50);
+
     ili9225_write_command(config, ILI9225_DISP_CTRL1);
-    ili9225_write_data16(config, 0x0012);
-    sleep_ms(10);
-    ili9225_write_command(config, ILI9225_DISP_CTRL1);
-    ili9225_write_data16(config, 0x0017);
+    ili9225_write_data16(config, 0x1017);
 
     LOG_INFO("ILI9225 initialization complete");
 
-    ili9225_set_rotation(config, ILI9225_PORTRAIT);
+    ili9225_set_orientation(config, ILI9225_PORTRAIT);
 }
 
-void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation) {
+void ili9225_set_orientation(ili9225_config_t* config, ili9225_rotation_t rotation) {
     if (!config) {
         LOG_ERROR("set_rotation: config is NULL");
         return;
