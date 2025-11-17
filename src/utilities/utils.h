@@ -12,10 +12,14 @@
 
 // Screen Rotation
 typedef enum {
-    ILI9225_PORTRAIT = 0,
-    ILI9225_LANDSCAPE = 1,
-    ILI9225_PORTRAIT_REV = 2,
-    ILI9225_LANDSCAPE_REV = 3
+    ILI9225_PORTRAIT = 0,                   // AM=0, ID=0b10 - Normal portrait
+    ILI9225_LANDSCAPE = 1,                  // AM=1, ID=0b10 - Normal landscape 
+    ILI9225_PORTRAIT_REV = 2,               // AM=0, ID=0b00 - Portrait reversed
+    ILI9225_LANDSCAPE_REV = 3,              // AM=1, ID=0b00 - Landscape reversed
+    ILI9225_PORTRAIT_MIRROR = 4,            // AM=0, ID=0b11 - Portrait mirrored
+    ILI9225_LANDSCAPE_MIRROR = 5,           // AM=1, ID=0b11 - Landscape mirrored
+    ILI9225_PORTRAIT_REV_MIRROR = 6,        // AM=0, ID=0b01 - Portrait mirrored & reversed
+    ILI9225_LANDSCAPE_REV_MIRROR = 7        // AM=1, ID=0b01 - Landscape mirrored & reversed
 } ili9225_rotation_t;
 
 // Colors

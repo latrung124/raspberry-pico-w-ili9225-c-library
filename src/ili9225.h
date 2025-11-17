@@ -236,4 +236,21 @@ void ili9225_draw_char(ili9225_config_t* config, uint16_t x, uint16_t y,
 void ili9225_draw_bitmap(ili9225_config_t* config, uint16_t x, uint16_t y,
                  const uint8_t* bitmap, uint16_t w, uint16_t h, uint16_t color);
 
+/**
+ * @brief Set the color order (RGB or BGR) for the display
+ * 
+ * @param config Pointer to ili9225_config_t structure
+ * @param is_rgb true for RGB order, false for BGR order
+ * @return void
+ */
+void ili9225_set_color_order(ili9225_config_t* config, bool is_rgb);
+
+/**
+ * @brief Refresh the display to show the latest framebuffer content
+ * Use after changing SS or BGR
+ * 
+ * @param config Pointer to ili9225_config_t structure
+ * @return void
+ */
+void ili9225_refresh_display(ili9225_config_t* config);
 #endif // ILI9225_H

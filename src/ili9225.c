@@ -180,25 +180,50 @@ void ili9225_init(ili9225_config_t* config, spi_inst_t* spi, uint pin_sck, uint 
 }
 
 void ili9225_set_rotation(ili9225_config_t* config, ili9225_rotation_t rotation) {
+    if (!config) {
+        LOG_ERROR("set_rotation: config is NULL");
+        return;
+    }
+
+    if (config->rotation == rotation) {
+        return; // No change
+    }
+
+    uint16_t entry_mode = ENTRY_MODE_RGB; // default RGB
+
     config->rotation = rotation;
-    ili9225_write_command(config, ILI9225_ENTRY_MODE);
     switch (rotation) {
-        case ILI9225_PORTRAIT:
-            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT);
+        case ILI9225_PORTRAIT:            // AM=0, ID=0b10
+            entry_mode |= ENTRY_MODE_ID1; // ID1 = 1, ID0 = 0
             break;
-        case ILI9225_LANDSCAPE:
-            ili9225_write_data16(config, ILI9225_ENTRY_MODE_LANDSCAPE);
+        case ILI9225_LANDSCAPE:          // AM=1, ID=0b10
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID1; // AM=1, ID1=1, ID0=0
             break;
-        case ILI9225_PORTRAIT_REV:
-            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT_REV);
+        case ILI9225_PORTRAIT_REV:       // AM=0, ID=0b00
+            // ID1=0, ID0=0
             break;
-        case ILI9225_LANDSCAPE_REV:
-            ili9225_write_data16(config, ILI9225_ENTRY_MODE_LANDSCAPE_REV);
+        case ILI9225_LANDSCAPE_REV:     // AM=1, ID=0b00
+            entry_mode |= ENTRY_MODE_AM; // AM=1, ID1=0, ID0=0
+            break;
+        case ILI9225_PORTRAIT_MIRROR:    // AM=0, ID=0b11
+            entry_mode |= ENTRY_MODE_ID1 | ENTRY_MODE_ID0; // ID1=1, ID0=1
+            break;
+        case ILI9225_LANDSCAPE_MIRROR:  // AM=1, ID=0b11
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID1 | ENTRY_MODE_ID0; // AM=1, ID1=1, ID0=1
+            break;
+        case ILI9225_PORTRAIT_REV_MIRROR:// AM=0, ID=0b01
+            entry_mode |= ENTRY_MODE_ID0; // ID1=0, ID0=1
+            break;
+        case ILI9225_LANDSCAPE_REV_MIRROR:// AM=1, ID=0b01
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID0; // AM=1, ID1=0, ID0=1
             break;
         default:
-            ili9225_write_data16(config, ILI9225_ENTRY_MODE_PORTRAIT);
             break;
     }
+    ili9225_write_command(config, ILI9225_ENTRY_MODE);
+    ili9225_write_data16(config, entry_mode);
+
+    ili9225_refresh_display(config);
 }
 
 void ili9225_fill_screen(ili9225_config_t* config, uint16_t color) {
@@ -267,10 +292,26 @@ void ili9225_draw_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_
 }
 
 void ili9225_fill_rect(ili9225_config_t* config, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
-    ili9225_set_window(config, x, y, x + w - 1, y + h - 1);
+    if (!config) {
+        LOG_ERROR("fill_rect: config is NULL");
+        return;
+    }
+
+    if (x >= config->width || y >= config->height) {
+        LOG_TRACE("fill_rect: starting point out of bounds (%d, %d) - display is %dx%d", 
+                 x, y, config->width, config->height);
+        return;
+    }
+
+    uint16_t x_end = (x + w - 1 >= config->width) ? (config->width - 1) : (x + w - 1);
+    uint16_t y_end = (y + h - 1 >= config->height) ? (config->height - 1) : (y + h - 1);
+    
+    ili9225_set_window(config, x, y, x_end, y_end);
     gpio_put(config->pin_dc, ILI9225_DATA_GPIO);
     gpio_put(config->pin_cs, ILI9225_CS_LOW);
-    for (uint32_t i = 0; i < (uint32_t)w * h; ++i) {
+
+    uint32_t pixel_count = (uint32_t)(x_end - x + 1) * (y_end - y + 1);
+    for (uint32_t i = 0; i < pixel_count; ++i) {
         uint8_t buf[2] = {color >> 8, color & 0xFF};
         spi_write_blocking(config->spi, buf, 2);
     }
@@ -448,4 +489,64 @@ void ili9225_draw_bitmap(ili9225_config_t* config, uint16_t x, uint16_t y,
             }
         }
     }
+}
+
+void ili9225_set_color_order(ili9225_config_t* config, bool is_rgb) {
+    static bool current_is_rgb = true;
+
+    if (current_is_rgb == is_rgb) {
+        return; // No change needed
+    }
+
+    if (!config) {
+        LOG_ERROR("set_color_order: config is NULL");
+        return;
+    }
+
+    uint16_t entry_mode = is_rgb ? ENTRY_MODE_RGB : ENTRY_MODE_BGR;
+
+    switch (config->rotation) {
+        case ILI9225_PORTRAIT:
+            entry_mode |= ENTRY_MODE_ID1; // ID1 = 1, ID0 = 0
+            break;
+        case ILI9225_LANDSCAPE:
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID1; // AM=1, ID1=1, ID0=0
+            break;
+        case ILI9225_PORTRAIT_REV:
+            // ID1=0, ID0=0
+            break;
+        case ILI9225_LANDSCAPE_REV:
+            entry_mode |= ENTRY_MODE_AM; // AM=1, ID1=0, ID0=0
+            break;
+        case ILI9225_PORTRAIT_MIRROR:
+            entry_mode |= ENTRY_MODE_ID1 | ENTRY_MODE_ID0; // ID1=1, ID0=1
+            break;
+        case ILI9225_LANDSCAPE_MIRROR:
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID1 | ENTRY_MODE_ID0; // AM=1, ID1=1, ID0=1
+            break;
+        case ILI9225_PORTRAIT_REV_MIRROR:
+            entry_mode |= ENTRY_MODE_ID0; // ID1=0, ID0=1
+            break;
+        case ILI9225_LANDSCAPE_REV_MIRROR:
+            entry_mode |= ENTRY_MODE_AM | ENTRY_MODE_ID0; // AM=1, ID1=0, ID0=1
+            break;
+        default:
+            break;
+    }
+
+    ili9225_write_command(config, ILI9225_ENTRY_MODE);
+    ili9225_write_data16(config, entry_mode);
+
+    current_is_rgb = is_rgb;
+
+    ili9225_refresh_display(config);
+}
+
+void ili9225_refresh_display(ili9225_config_t* config) {
+    if (!config) {
+        LOG_ERROR("refresh_display: config is NULL");
+        return;
+    }
+
+    ili9225_fill_screen(config, COLOR_BLACK);
 }
