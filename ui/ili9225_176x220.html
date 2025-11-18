@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILI9225 Mockup (176x220) - GFX Fonts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Using 'Roboto Mono' to simulate the blocky GFX fonts better than Silkscreen for this specific sizes -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            font-family: sans-serif;
+            font-weight: 400;
+            font-size: 1rem;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        /* FONT SIMULATION 
+           These classes simulate the approximate pixel height of the 7b fonts 
+        */
+        .font-9pt { font-size: 12px; }
+        .font-12pt { font-size: 16px; }
+        .font-18pt { font-size: 24px; }
+        .font-24pt { font-size: 32px; }
+
+        #screen {
+            width: 176px;
+            height: 220px;
+            border: 10px solid #1a1a1a;
+            border-radius: 8px;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        /* HERO SECTION (PM2.5) */
+        #hero-pm25 {
+            flex: 5; /* 55% of screen height */
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+            border-bottom: 4px solid rgba(0,0,0,0.2); /* subtle divider */
+        }
+
+        /* Status Colors */
+        .status-good { background-color: #009966; }
+        .status-moderate { background-color: #FFDE33; color: #333; }
+        .status-unhealthy { background-color: #CC0033; }
+
+        #hero-pm25 .label {
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        #hero-pm25 .value-container {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 5px;
+        }
+
+        #hero-pm25 .status-text {
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        /* SECONDARY DATA (Temp/Hum) */
+        #secondary-data {
+            flex: 4; /* 45% of screen height */
+            display: flex;
+            flex-direction: column; /* Stacked vertically now due to width constraints */
+            background-color: #111;
+        }
+
+        .data-row {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Push label left, value right */
+            padding: 0 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-row .icon {
+            font-size: 16px; /* Simulating 16x16 bitmap */
+            width: 16px;
+            text-align: center;
+        }
+
+        .data-row .label {
+            color: #888;
+        }
+
+        .data-row .value {
+            color: #fff;
+        }
+
+        /* Controls */
+        #controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        #controls button {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ILI9225 (176x220) - Limited Fonts</h1>
+
+    <div id="screen">
+        
+        <!-- HERO: PM2.5 -->
+        <!-- Uses the full width for maximum impact -->
+        <div id="hero-pm25" class="status-good">
+            <!-- Font: 12pt7b -->
+            <div class="label font-12pt">PM2.5</div>
+            
+            <div class="value-container">
+                <!-- Font: 24pt7b (Your Max Size) -->
+                <div class="value font-24pt" id="pm25-value">12</div>
+                <!-- Font: 9pt7b -->
+                <div class="unit font-9pt">ug/m3</div>
+            </div>
+
+            <!-- Font: 12pt7b -->
+            <div class="status-text font-12pt" id="pm25-status">GOOD</div>
+        </div>
+
+        <!-- SECONDARY: Stacked Vertically -->
+        <!-- Switching to vertical stack allows us to use larger fonts 
+             (18pt) for values without them crashing into each other -->
+        <div id="secondary-data">
+            
+            <!-- Temperature -->
+            <div class="data-row">
+                <div class="data-left">
+                    <div class="icon">🌡️</div>
+                    <!-- Font: 9pt7b -->
+                    <div class="label font-9pt">TMP</div>
+                </div>
+                <!-- Font: 18pt7b -->
+                <div class="value font-18pt">28.5°</div>
+            </div>
+
+            <!-- Humidity -->
+            <div class="data-row">
+                <div class="data-left">
+                    <div class="icon">💧</div>
+                    <!-- Font: 9pt7b -->
+                    <div class="label font-9pt">HUM</div>
+                </div>
+                <!-- Font: 18pt7b -->
+                <div class="value font-18pt">62%</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="controls">
+        <button onclick="updateStatus('good')">Good</button>
+        <button onclick="updateStatus('moderate')">Moderate</button>
+        <button onclick="updateStatus('unhealthy')">Unhealthy</button>
+    </div>
+
+    <script>
+        const hero = document.getElementById('hero-pm25');
+        const pm25Value = document.getElementById('pm25-value');
+        const pm25Status = document.getElementById('pm25-status');
+
+        function updateStatus(status) {
+            hero.className = ''; // clear previous class
+            switch (status) {
+                case 'good':
+                    hero.classList.add('status-good');
+                    pm25Value.innerText = '12';
+                    pm25Status.innerText = 'GOOD';
+                    break;
+                case 'moderate':
+                    hero.classList.add('status-moderate');
+                    pm25Value.innerText = '45';
+                    pm25Status.innerText = 'MODERATE';
+                    break;
+                case 'unhealthy':
+                    hero.classList.add('status-unhealthy');
+                    pm25Value.innerText = '155';
+                    pm25Status.innerText = 'DANGER';
+                    break;
+            }
+        }
+    </script>
+
+</body>
+</html>
