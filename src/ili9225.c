@@ -391,6 +391,24 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
     // TODO: Implement fill triangle function for ILI9225
 }
 
+void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const GFXfont *font, uint16_t color) {
+    if (!config || !text || !font) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_gfx_text: config is NULL");
+        }
+        if (!text) {
+            LOG_ERROR("draw_gfx_text: text is NULL");
+        }
+        if (!font) {
+            LOG_ERROR("draw_gfx_text: font is NULL");
+        }
+#endif
+        return;
+    }
+    // TODO: Implement draw GFX text function for ILI9225
+}
+
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const font_t *font, uint16_t color) {
     if (!config || !text || !font) {
 #ifdef ILI9225_DEBUG_LOGGING
@@ -414,6 +432,22 @@ void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const c
         current_x += font->width + 1; // +1 for spacing between characters
         text++;
     }
+}
+
+void ili9225_draw_gfx_char(ili9225_config_t* config, uint16_t x, uint16_t y,
+                   char c, const GFXfont *font, uint16_t color) {
+    if (!config || !font) {
+#ifdef ILI9225_DEBUG_LOGGING
+        if (!config) {
+            LOG_ERROR("draw_gfx_char: config is NULL");
+        }
+        if (!font) {
+            LOG_ERROR("draw_gfx_char: font is NULL");
+        }
+#endif
+        return;
+    }
+    // TODO: Implement draw GFX char function for ILI9225
 }
 
 void ili9225_draw_char(ili9225_config_t *config, uint16_t x, uint16_t y, char c, const font_t *font, uint16_t color) {
