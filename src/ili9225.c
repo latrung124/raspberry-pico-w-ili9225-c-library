@@ -406,20 +406,7 @@ void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y, con
 #endif
         return;
     }
-
-    uint16_t cursor_x = x;
-    uint16_t cursor_y = y;
-    
-    while (*text) {
-        if (*text == '\n') {
-            cursor_x = x;
-            cursor_y += font->yAdvance;
-        } else {
-            ili9225_draw_gfx_char(config, cursor_x, cursor_y, *text, font, color);
-            cursor_x += font->glyph[*text - font->first].xAdvance;
-        }
-        text++;
-    }
+    // TODO: Implement draw GFX text function for ILI9225
 }
 
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const font_t *font, uint16_t color) {
@@ -460,25 +447,7 @@ void ili9225_draw_gfx_char(ili9225_config_t* config, uint16_t x, uint16_t y,
 #endif
         return;
     }
-
-    if (c < font->first || c > font->last) return;
-    
-    const GFXglyph *glyph = &font->glyph[c - font->first];
-    uint16_t bo = glyph->bitmapOffset;
-    uint8_t bits = 0, bit = 0;
-    
-    for (uint8_t yy = 0; yy < glyph->height; yy++) {
-        for (uint8_t xx = 0; xx < glyph->width; xx++) {
-            if (bit == 0) {
-                bits = font->bitmap[bo++];
-            }
-            if (bits & 0x80) {
-                ili9225_draw_pixel(config, x + glyph->xOffset + xx, y + glyph->yOffset + yy, color);
-            }
-            bits <<= 1;
-            bit = (bit + 1) & 7;
-        }
-    }
+    // TODO: Implement draw GFX char function for ILI9225
 }
 
 void ili9225_draw_char(ili9225_config_t *config, uint16_t x, uint16_t y, char c, const font_t *font, uint16_t color) {
