@@ -11,9 +11,7 @@
 #define LOG_H
 
 #include <stdio.h>
-#ifndef SIMULATOR_BUILD
 #include "pico/stdlib.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

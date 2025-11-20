@@ -12,9 +12,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#ifndef SIMULATOR_BUILD
 #include "pico/time.h"
-#endif
 
 // Global log level - default to INFO
 log_level_t g_log_level = LOG_LEVEL_INFO;
@@ -43,9 +41,7 @@ static const char* color_reset = "\033[0m";
 #endif
 
 void log_init(void) {
-#ifndef SIMULATOR_BUILD
     stdio_init_all();
-#endif
     g_log_level = LOG_LEVEL_INFO;  // Default level
 }
 
@@ -73,18 +69,9 @@ void log_print(log_level_t level, const char* file, int line, const char* func, 
     }
 
     // Print timestamp
-#ifdef SIMULATOR_BUILD
-    // Simple timestamp for simulator
-    static uint32_t sim_time_ms = 0;
-    sim_time_ms += 10; // Increment by 10ms each call
-    uint32_t seconds = sim_time_ms / 1000;
-    uint32_t millis = sim_time_ms % 1000;
-#else
-    // Use Pico time in microseconds
     uint64_t time_us = time_us_64();
-    uint32_t seconds = (uint32_t)(time_us / 1000000);
-    uint32_t millis = (uint32_t)((time_us % 1000000) / 1000);
-#endif
+    uint32_t seconds = time_us / 1000000;
+    uint32_t millis = (time_us % 1000000) / 1000;
 
 #ifdef LOG_USE_COLOR
     printf("%s[%5u.%03u] [%5s] %s:%d %s() - ",
