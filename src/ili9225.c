@@ -391,22 +391,53 @@ void ili9225_fill_triangle(ili9225_config_t* config, uint16_t x0, uint16_t y0,
     // TODO: Implement fill triangle function for ILI9225
 }
 
-void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const GFXfont *font, uint16_t color) {
+void ili9225_draw_gfx_text(ili9225_config_t* config, uint16_t x, uint16_t y, 
+                           const char* text, const GFXfont *font, uint16_t color) {
     if (!config || !text || !font) {
 #ifdef ILI9225_DEBUG_LOGGING
-        if (!config) {
-            LOG_ERROR("draw_gfx_text: config is NULL");
-        }
-        if (!text) {
-            LOG_ERROR("draw_gfx_text: text is NULL");
-        }
-        if (!font) {
-            LOG_ERROR("draw_gfx_text: font is NULL");
-        }
+        if (!config) LOG_ERROR("draw_gfx_text: config is NULL");
 #endif
         return;
     }
-    // TODO: Implement draw GFX text function for ILI9225
+
+    int16_t cursor_x = x;
+    int16_t cursor_y = y;
+
+    while (*text) {
+        char c = *text++;
+
+        // Handle Carriage Return (RGB Text usually ignores \r, but good to handle)
+        if (c == '\r') {
+            continue;
+        }
+
+        // Handle Newline
+        if (c == '\n') {
+            cursor_x = x;               // Reset X to initial position
+            cursor_y += font->yAdvance; // Move Y down by line height
+            continue;
+        } 
+
+        // Skip non-printable characters to prevent crashes
+        if (c < font->first || c > font->last) {
+            continue;
+        }
+
+        GFXglyph *glyph = &font->glyph[c - font->first];
+
+        // Text Wrapping Logic
+        // If this character + its width goes off the right edge...
+        if (cursor_x + glyph->width + glyph->xOffset > config->width) {
+            cursor_x = x;               // Reset X
+            cursor_y += font->yAdvance; // Move Y down
+        }
+
+        // Draw the character
+        ili9225_draw_gfx_char(config, cursor_x, cursor_y, c, font, color);
+        
+        // Advance cursor
+        cursor_x += glyph->xAdvance;
+    }
 }
 
 void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const char* text, const font_t *font, uint16_t color) {
@@ -434,20 +465,62 @@ void ili9225_draw_text(ili9225_config_t* config, uint16_t x, uint16_t y, const c
     }
 }
 
+// Helper function to check if a character is printable
+static bool is_printable(char c) {
+    return (c >= ' ' && c <= '~');
+}
+
 void ili9225_draw_gfx_char(ili9225_config_t* config, uint16_t x, uint16_t y,
-                   char c, const GFXfont *font, uint16_t color) {
-    if (!config || !font) {
-#ifdef ILI9225_DEBUG_LOGGING
-        if (!config) {
-            LOG_ERROR("draw_gfx_char: config is NULL");
-        }
-        if (!font) {
-            LOG_ERROR("draw_gfx_char: font is NULL");
-        }
-#endif
+                           char c, const GFXfont *font, uint16_t color) {
+    if (!config || !font) return;
+
+    // 1. Bounds check: Is the character index valid?
+    if (c < font->first || c > font->last) return;
+
+    // 2. Get glyph pointer
+    GFXglyph *glyph = &font->glyph[c - font->first];
+    
+    // 3. Quick visibility check
+    // If the character is completely out of screen bounds, don't waste CPU cycles
+    // calculating bitmasks. (Assumes x,y are int16_t context)
+    int16_t char_x = x + glyph->xOffset;
+    int16_t char_y = y + glyph->yOffset;
+    
+    if (char_x + glyph->width < 0 || char_x >= config->width ||
+        char_y + glyph->height < 0 || char_y >= config->height) {
         return;
     }
-    // TODO: Implement draw GFX char function for ILI9225
+
+    // 4. Set up pointers
+    // Note: font->bitmap is a pointer to const uint8_t in Flash (RODATA)
+    uint8_t *bitmap = font->bitmap; 
+    uint16_t bo = glyph->bitmapOffset;
+    
+    uint8_t w  = glyph->width;
+    uint8_t h  = glyph->height;
+    
+    uint8_t  bits = 0, bit = 0;
+    int16_t  xx, yy;
+
+    // 5. Rasterizer Loop
+    for (yy = 0; yy < h; yy++) {
+        for (xx = 0; xx < w; xx++) {
+            // Every 8th bit, fetch the next byte from Flash
+            if (!(bit++ & 7)) {
+                bits = bitmap[bo++];
+            }
+            
+            // Check Most Significant Bit (MSB)
+            if (bits & 0x80) {
+                // Draw pixel with absolute coordinates
+                // draw_pixel inside ili9225 handles specific hardware clipping
+                ili9225_draw_pixel(config, char_x + xx, char_y + yy, color);
+            }
+            
+            // Shift buffer to ready the next bit
+            bits <<= 1;
+        }
+    }
 }
 
 void ili9225_draw_char(ili9225_config_t *config, uint16_t x, uint16_t y, char c, const font_t *font, uint16_t color) {
