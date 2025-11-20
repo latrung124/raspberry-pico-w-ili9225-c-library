@@ -276,6 +276,47 @@ void test_fill_screen_with_color(ili9225_config_t* lcd, uint16_t color) {
     sleep(2);
 }
 
+void test_gfx_text(ili9225_config_t* lcd) {
+    printf("\n=== Testing REAL ili9225_draw_gfx_text() with GFXfont ===\n");
+    
+    // Clear screen with white background
+    ili9225_fill_screen(lcd, COLOR_WHITE);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw title with FreeSansBold9pt7b font
+    ili9225_draw_gfx_text(lcd, 10, 30, "GFX Font Test", &FreeSansBold9pt7b, COLOR_BLACK);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw some sample text
+    ili9225_draw_gfx_text(lcd, 10, 60, "Hello World!", &FreeSansBold9pt7b, COLOR_BLUE);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw numbers
+    ili9225_draw_gfx_text(lcd, 10, 90, "0123456789", &FreeSansBold9pt7b, COLOR_RED);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw special characters
+    ili9225_draw_gfx_text(lcd, 10, 120, "!@#$%^&*()", &FreeSansBold9pt7b, COLOR_GREEN);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw mixed case text
+    ili9225_draw_gfx_text(lcd, 10, 150, "AaBbCc123", &FreeSansBold9pt7b, COLOR_MAGENTA);
+    sim_mock_flush_framebuffer();
+    sleep(1);
+    
+    // Draw multi-line text with newline
+    ili9225_draw_gfx_text(lcd, 10, 180, "Line 1\nLine 2\nLine 3", &FreeSansBold9pt7b, COLOR_CYAN);
+    sim_mock_flush_framebuffer();
+    sleep(2);
+    
+    printf("GFX text rendering complete!\n");
+}
+
 void print_help(const char* program_name) {
     printf("Usage: %s [options]\n\n", program_name);
     printf("Test the real ili9225.c implementation with the web simulator.\n\n");
@@ -286,6 +327,7 @@ void print_help(const char* program_name) {
     printf("  --rectangles       Test rectangle drawing (ili9225_draw_rect, ili9225_fill_rect)\n");
     printf("  --circles          Test circle drawing (ili9225_draw_circle, ili9225_fill_circle)\n");
     printf("  --text             Test text rendering (ili9225_draw_text, ili9225_draw_char)\n");
+    printf("  --gfx-text         Test GFX text rendering (ili9225_draw_gfx_text with GFXfont)\n");
     printf("  --temperature      Test temperature text display\n");
     printf("  --complex          Test complex UI drawing\n");
     printf("  --fill-screen COLOR Test fill screen with specified color\n");
@@ -336,6 +378,7 @@ int main(int argc, char* argv[]) {
     bool run_temperature = false;
     bool run_cross_lines = false;
     bool run_diagonal_lines = false;
+    bool run_gfx_text = false;
     uint16_t fill_color = COLOR_BLACK;
     
     // If any specific test is requested, disable run_all
@@ -382,6 +425,9 @@ int main(int argc, char* argv[]) {
             run_all = false;
         } else if (strcmp(argv[i], "--diagonal-lines") == 0)  {
             run_diagonal_lines = true;
+            run_all = false;
+        } else if (strcmp(argv[i], "--gfx-text") == 0)  {
+            run_gfx_text = true;
             run_all = false;
         } else
         {
@@ -464,6 +510,10 @@ int main(int argc, char* argv[]) {
 
     if (run_diagonal_lines) {
         test_diagonal_lines(&lcd);
+    }
+
+    if (run_gfx_text) {
+        test_gfx_text(&lcd);
     }
     
     printf("\n===========================================\n");
