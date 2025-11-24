@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ILI9225 LCD Simulator</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .display-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .lcd-frame {
+            background: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: inline-block;
+        }
+        
+        #display {
+            border: 3px solid #34495e;
+            border-radius: 5px;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            background: #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .connection-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .connected {
+            background: #27ae60;
+            box-shadow: 0 0 10px #27ae60;
+        }
+        
+        .disconnected {
+            background: #e74c3c;
+        }
+        
+        .info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            margin-top: 20px;
+        }
+        
+        .info h3 {
+            color: #2980b9;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .info code {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .info p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .command-builder {
+            background: #fff9e6;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #f39c12;
+            margin-top: 20px;
+        }
+        
+        .command-builder h3 {
+            color: #d68910;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        
+        .checkbox-label:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .checkbox-label input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .color-selector {
+            margin-bottom: 15px;
+        }
+        
+        .color-selector label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .color-selector select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .command-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin-bottom: 10px;
+            word-break: break-all;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #3498db;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .updating {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ ILI9225 LCD Simulator</h1>
+        <p class="subtitle">{{ width }}×{{ height }} Display - Web Version for GitHub Codespaces</p>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Connection</div>
+                <div class="stat-value">
+                    <span class="connection-status disconnected" id="status-indicator"></span>
+                    <span id="status-text">Connecting...</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Draw Count</div>
+                <div class="stat-value" id="draw-count">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Resolution</div>
+                <div class="stat-value">{{ width }}×{{ height }}</div>
+            </div>
+        </div>
+        
+        <div class="display-container">
+            <div class="lcd-frame">
+                <img id="display" width="{{ width * 3 }}" height="{{ height * 3 }}" alt="LCD Display">
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="clearDisplay()">🗑️ Clear</button>
+            <button onclick="runDemo()">▶️ Run Demo</button>
+            <button onclick="testPixels()">🔴 Test Pixels</button>
+            <button onclick="testShapes()">⬜ Test Shapes</button>
+            <button onclick="testCircles()">⭕ Test Circles</button>
+            <button onclick="testText()">📝 Test Text</button>
+        </div>
+        
+        <div class="command-builder">
+            <h3>🛠️ Command Builder for test_real_ili9225</h3>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Select test options below to generate a command-line for the C test program:
+            </p>
+            
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-pixels" onchange="updateCommand()">
+                    <span>--pixels</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-lines" onchange="updateCommand()">
+                    <span>--lines</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-rectangles" onchange="updateCommand()">
+                    <span>--rectangles</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-circles" onchange="updateCommand()">
+                    <span>--circles</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-text" onchange="updateCommand()">
+                    <span>--text</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="opt-complex" onchange="updateCommand()">
+                    <span>--complex</span>
+                </label>
+            </div>
+            
+            <div class="color-selector">
+                <label>
+                    <input type="checkbox" id="opt-fill-screen" onchange="updateCommand()" style="margin-right: 5px;">
+                    Fill screen with color:
+                </label>
+                <select id="fill-color" onchange="updateCommand()">
+                    <option value="black">black</option>
+                    <option value="white">white</option>
+                    <option value="red">red</option>
+                    <option value="green">green</option>
+                    <option value="blue">blue</option>
+                    <option value="yellow">yellow</option>
+                    <option value="cyan">cyan</option>
+                    <option value="magenta">magenta</option>
+                    <option value="0xF800">0xF800 (red)</option>
+                    <option value="0x07E0">0x07E0 (green)</option>
+                    <option value="0x001F">0x001F (blue)</option>
+                </select>
+            </div>
+            
+            <div class="command-output" id="command-output">
+                <span id="command-text">./test_real_ili9225</span>
+                <button class="copy-btn" onclick="copyCommand()">📋 Copy</button>
+            </div>
+            
+            <p style="color: #666; font-size: 12px; margin-top: 10px;">
+                💡 <strong>Tip:</strong> Copy this command and run it in your terminal after starting the simulator!
+            </p>
+        </div>
+        
+        <div class="info">
+            <h3>📡 API Endpoints</h3>
+            <p><strong>POST</strong> <code>/api/command</code> - Send drawing command</p>
+            <p><strong>GET</strong> <code>/api/image</code> - Get current display image</p>
+            <p><strong>POST</strong> <code>/api/clear</code> - Clear display</p>
+            <p><strong>WebSocket:</strong> Real-time updates via Socket.IO</p>
+        </div>
+    </div>
+
+    <script>
+        // Command builder - store current command globally
+        let currentCommand = './test_real_ili9225';
+        
+        function updateCommand() {
+            const options = [];
+            
+            if (document.getElementById('opt-pixels').checked) options.push('--pixels');
+            if (document.getElementById('opt-lines').checked) options.push('--lines');
+            if (document.getElementById('opt-rectangles').checked) options.push('--rectangles');
+            if (document.getElementById('opt-circles').checked) options.push('--circles');
+            if (document.getElementById('opt-text').checked) options.push('--text');
+            if (document.getElementById('opt-complex').checked) options.push('--complex');
+            
+            if (document.getElementById('opt-fill-screen').checked) {
+                const color = document.getElementById('fill-color').value;
+                options.push('--fill-screen ' + color);
+            }
+            
+            currentCommand = options.length > 0 
+                ? './test_real_ili9225 ' + options.join(' ')
+                : './test_real_ili9225';
+            
+            document.getElementById('command-text').textContent = currentCommand;
+        }
+        
+        function copyCommand() {
+            navigator.clipboard.writeText(currentCommand).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Colors (RGB565)
+        const Colors = {
+            BLACK:   0x0000,
+            WHITE:   0xFFFF,
+            RED:     0xF800,
+            GREEN:   0x07E0,
+            BLUE:    0x001F,
+            YELLOW:  0xFFE0,
+            CYAN:    0x07FF,
+            MAGENTA: 0xF81F
+        };
+        
+        // Socket.IO connection
+        const socket = io();
+        
+        socket.on('connect', function() {
+            console.log('Connected to simulator');
+            document.getElementById('status-text').textContent = 'Connected';
+            document.getElementById('status-indicator').className = 'connection-status connected';
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from simulator');
+            document.getElementById('status-text').textContent = 'Disconnected';
+            document.getElementById('status-indicator').className = 'connection-status disconnected';
+        });
+        
+        socket.on('display_update', function(data) {
+            const img = document.getElementById('display');
+            img.src = data.image;
+            img.classList.add('updating');
+            setTimeout(() => img.classList.remove('updating'), 100);
+            document.getElementById('draw-count').textContent = data.draw_count;
+        });
+        
+        // Helper function to send command
+        function sendCommand(cmd) {
+            socket.emit('command', cmd);
+        }
+        
+        // Clear display
+        function clearDisplay() {
+            socket.emit('clear', {color: Colors.BLACK});
+        }
+        
+        // Demo functions
+        function runDemo() {
+            clearDisplay();
+            setTimeout(() => {
+                // Draw pixels
+                for (let i = 0; i < 176; i += 10) {
+                    sendCommand({type: 'pixel', x: i, y: 10, color: Colors.RED});
+                }
+                
+                // Draw lines
+                setTimeout(() => {
+                    sendCommand({type: 'line', x0: 10, y0: 30, x1: 166, y1: 30, color: Colors.GREEN});
+                    sendCommand({type: 'line', x0: 10, y0: 40, x1: 166, y1: 50, color: Colors.BLUE});
+                }, 500);
+                
+                // Draw rectangles
+                setTimeout(() => {
+                    sendCommand({type: 'rect', x: 20, y: 60, w: 40, h: 30, color: Colors.RED});
+                    sendCommand({type: 'fill_rect', x: 70, y: 60, w: 40, h: 30, color: Colors.GREEN});
+                }, 1000);
+                
+                // Draw circles
+                setTimeout(() => {
+                    sendCommand({type: 'circle', x: 40, y: 130, r: 20, color: Colors.CYAN});
+                    sendCommand({type: 'fill_circle', x: 100, y: 130, r: 20, color: Colors.MAGENTA});
+                }, 1500);
+                
+                // Draw text
+                setTimeout(() => {
+                    sendCommand({type: 'text', x: 10, y: 170, text: 'ILI9225 Test', color: Colors.WHITE, size: 1});
+                    sendCommand({type: 'text', x: 10, y: 190, text: 'Web Simulator', color: Colors.YELLOW, size: 1});
+                }, 2000);
+            }, 300);
+        }
+        
+        function testPixels() {
+            clearDisplay();
+            setTimeout(() => {
+                for (let x = 0; x < 176; x += 5) {
+                    for (let y = 0; y < 220; y += 5) {
+                        const color = (x * y) % 0xFFFF;
+                        sendCommand({type: 'pixel', x: x, y: y, color: color});
+                    }
+                }
+            }, 100);
+        }
+        
+        function testShapes() {
+            clearDisplay();
+            setTimeout(() => {
+                sendCommand({type: 'fill_rect', x: 10, y: 10, w: 50, h: 40, color: Colors.RED});
+                sendCommand({type: 'fill_rect', x: 70, y: 10, w: 50, h: 40, color: Colors.GREEN});
+                sendCommand({type: 'fill_rect', x: 130, y: 10, w: 36, h: 40, color: Colors.BLUE});
+                sendCommand({type: 'rect', x: 20, y: 70, w: 136, h: 100, color: Colors.YELLOW});
+            }, 100);
+        }
+        
+        function testCircles() {
+            clearDisplay();
+            setTimeout(() => {
+                for (let r = 10; r < 100; r += 10) {
+                    const color = [Colors.RED, Colors.GREEN, Colors.BLUE, Colors.YELLOW, Colors.CYAN, Colors.MAGENTA, Colors.WHITE][Math.floor(r / 10) % 7];
+                    sendCommand({type: 'circle', x: 88, y: 110, r: r, color: color});
+                }
+            }, 100);
+        }
+        
+        function testText() {
+            clearDisplay();
+            setTimeout(() => {
+                socket.emit('clear', {color: Colors.WHITE});
+                setTimeout(() => {
+                    sendCommand({type: 'text', x: 10, y: 10, text: 'ILI9225 Display', color: Colors.BLACK, size: 1});
+                    sendCommand({type: 'text', x: 10, y: 30, text: 'Web Simulator', color: Colors.RED, size: 1});
+                    sendCommand({type: 'text', x: 10, y: 50, text: 'GitHub Codespaces', color: Colors.GREEN, size: 1});
+                    sendCommand({type: 'text', x: 10, y: 80, text: '176x220 pixels', color: Colors.BLUE, size: 1});
+                    sendCommand({type: 'text', x: 10, y: 110, text: 'RGB565 colors', color: Colors.MAGENTA, size: 1});
+                }, 200);
+            }, 100);
+        }
+    </script>
+</body>
+</html>

@@ -12,8 +12,16 @@
 
 #include <stdint.h>
 
+#ifdef SIMULATOR_BUILD
+// Mock headers for simulator
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
+#include "hardware/gpio.h"
+#else
+// Real Pico SDK headers
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
+#endif
 
 #include "ili9225_defs.h"
 #include "fonts.h"
