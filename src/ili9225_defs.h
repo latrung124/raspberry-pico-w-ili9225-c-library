@@ -64,6 +64,8 @@
 #define ILI9225_GRAM_DATA_REG          0x22 // GRAM Data Register
 #define ILI9225_GATE_SCAN_CTRL         0x30 // Gate Scan Control
 #define ILI9225_VERTICAL_SCROLL_CTRL1  0x31 // Vertical Scroll Control 1
+#define ILI9225_VERTICAL_SCROLL_CTRL2  0x32 // Vertical Scroll Control 2
+#define ILI9225_VERTICAL_SCROLL_CTRL3  0x33 // Vertical Scroll Control 3
 #define ILI9225_PARTIAL_DRIVING_POS1   0x33 // Partial Driving Position 1
 #define ILI9225_PARTIAL_DRIVING_POS2   0x34 // Partial Driving Position 2
 #define ILI9225_HORIZONTAL_WINDOW_ADDR1 0x35 // Horizontal Window Address 1
